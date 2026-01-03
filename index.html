@@ -2,75 +2,101 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>EMR Klinik - Antrian & SOAP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Informasi EMR - Klinik dr. H. DUDI RUHENDERA</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#f4f6f8;margin:0}
+:root{--p:#0b5ed7;--d:#dc3545;--bg:#f4f6f8}
+body{margin:0;font-family:Arial;background:var(--bg)}
 .hidden{display:none}
-header{background:#0b5ed7;color:#fff;padding:14px;text-align:center}
-.container{max-width:1100px;margin:auto;padding:20px}
-.card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px}
-input,textarea,button{width:100%;padding:10px;margin-top:6px}
-button{background:#0b5ed7;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.list{padding:10px;border-bottom:1px solid #eee;cursor:pointer}
-.list:hover{background:#f0f4ff}
-.badge{padding:4px 8px;border-radius:6px;font-size:12px}
-.wait{background:orange;color:#fff}
-.call{background:green;color:#fff}
+header{background:var(--p);color:#fff;padding:16px;text-align:center}
+.container{padding:20px;max-width:1400px;margin:auto}
+.card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
+textarea{min-height:70px}
+button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
+button.danger{background:var(--d)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px}
+th{background:#f2f2f2}
+.total{font-size:20px;font-weight:bold;text-align:right}
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="loginPage" class="container">
+<div id="loginPage">
+<div class="container">
 <div class="card">
-<h3 align="center">LOGIN EMR</h3>
+<h2 align="center">LOGIN EMR</h2>
 <input id="username" placeholder="Username">
 <input id="pin" type="password" placeholder="PIN">
-<button onclick="login()">LOGIN</button>
+<button onclick="login()">MASUK</button>
+</div>
 </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="hidden">
-<header>EMR KLINIK – PENDAFTARAN, ANTRIAN & SOAP</header>
+<header>
+<b>Sistem Informasi EMR</b><br>
+Klinik dr. H. DUDI RUHENDERA
+</header>
+
 <div class="container">
 
 <div class="card">
-Login: <b id="userName"></b> | Role: <b id="userRole"></b>
+Login: <b id="userName"></b><br>
+Role: <b id="userRole"></b>
 </div>
 
-<div id="menu" class="card"></div>
+<div id="menu" class="grid"></div>
 
-<!-- PENDAFTARAN -->
-<div id="daftarPage" class="card hidden">
-<h3>Pendaftaran Pasien</h3>
-<input id="nama" placeholder="Nama Pasien">
-<input id="tgl" type="date">
-<button onclick="simpanPasien()">SIMPAN & MASUK ANTRIAN</button>
+<!-- RIWAYAT PASIEN -->
+<div id="riwayatPage" class="card hidden">
+<h3>Riwayat Pasien</h3>
+<input id="rmCari" placeholder="Masukkan No RM">
+<button onclick="loadRiwayat()">CARI RIWAYAT</button>
+
+<div id="hasilRiwayat"></div>
 </div>
 
-<!-- ANTRIAN DOKTER -->
-<div id="antrianPage" class="card hidden">
-<h3>Antrian Pasien</h3>
-<div id="listAntrian"></div>
+<!-- OBAT & PEMBAYARAN -->
+<div id="obatPage" class="card hidden">
+<h3>Obat & Pembayaran</h3>
+<input id="rmBayar" placeholder="No RM">
+<button onclick="loadPasienBayar()">CARI PASIEN</button>
+
+<hr>
+<b id="infoBayar"></b>
+
+<input id="namaObat" placeholder="Nama Obat">
+<input id="hargaObat" type="number" placeholder="Harga">
+<button onclick="tambahObat()">TAMBAH OBAT</button>
+
+<table>
+<thead><tr><th>Obat</th><th>Harga</th></tr></thead>
+<tbody id="listObat"></tbody>
+</table>
+
+<div class="total">TOTAL: Rp <span id="totalBayar">0</span></div>
+
+<select id="statusBayar">
+<option>LUNAS</option>
+<option>BELUM LUNAS</option>
+</select>
+
+<button onclick="simpanPembayaran()">SIMPAN PEMBAYARAN</button>
 </div>
 
-<!-- SOAP -->
-<div id="soapPage" class="card hidden">
-<h3>SOAP – <span id="soapNama"></span></h3>
-<textarea id="S" placeholder="Subjective"></textarea>
-<textarea id="O" placeholder="Objective"></textarea>
-<textarea id="A" placeholder="Assessment"></textarea>
-<textarea id="P" placeholder="Plan"></textarea>
-<button onclick="simpanSOAP()">SIMPAN SOAP</button>
+<div class="card">
+<button class="danger" onclick="logout()">LOGOUT</button>
 </div>
-
-<button onclick="logout()">LOGOUT</button>
 
 </div>
 </div>
@@ -78,118 +104,282 @@ Login: <b id="userName"></b> | Role: <b id="userRole"></b>
 <script>
 /* USER */
 const USERS={
-  "dokter":{pin:"123",role:"Dokter"},
-  "daftar":{pin:"123",role:"Pendaftaran"}
+"H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
+"Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
+"User2":{pin:"Username2",role:"Obat & Pembayaran"}
 };
 
 /* FIREBASE */
 firebase.initializeApp({
-  databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
 const db=firebase.database();
 
 /* LOGIN */
 function login(){
-  if(USERS[username.value] && USERS[username.value].pin===pin.value){
-    localStorage.setItem("user",username.value);
-    showDashboard();
-  } else alert("Username / PIN salah");
+if(USERS[username.value] && USERS[username.value].pin===pin.value){
+localStorage.setItem("emr_user",username.value);
+showDashboard();
+}else alert("Username / PIN salah");
 }
 
 /* DASHBOARD */
 function showDashboard(){
-  loginPage.classList.add("hidden");
-  dashboardPage.classList.remove("hidden");
+const u=localStorage.getItem("emr_user");
+loginPage.classList.add("hidden");
+dashboardPage.classList.remove("hidden");
+userName.innerText=u;
+userRole.innerText=USERS[u].role;
 
-  const u=localStorage.getItem("user");
-  userName.innerText=u;
-  userRole.innerText=USERS[u].role;
-
-  let m="";
-  if(USERS[u].role==="Pendaftaran"){
-    m+=`<button onclick="openDaftar()">Pendaftaran Pasien</button>`;
-  }
-  if(USERS[u].role==="Dokter"){
-    m+=`<button onclick="openAntrian()">Panggil Antrian</button>`;
-  }
-  menu.innerHTML=m;
+menu.innerHTML=`
+<div class="card" onclick="openRiwayat()">Riwayat Pasien</div>
+<div class="card" onclick="openObat()">Obat & Pembayaran</div>`;
 }
 
-/* PENDAFTARAN */
-function openDaftar(){
-  hideAll();
-  daftarPage.classList.remove("hidden");
-}
-function simpanPasien(){
-  if(!nama.value){alert("Nama wajib diisi");return;}
-  const rm="RM"+Date.now();
-  db.ref("pasien/"+rm).set({
-    nama:nama.value,
-    tgl:tgl.value,
-    status:"MENUNGGU",
-    waktu:new Date().toISOString()
-  });
-  alert("Pasien berhasil masuk antrian");
-  nama.value=""; tgl.value="";
+/* RIWAYAT */
+function openRiwayat(){
+hideAll();riwayatPage.classList.remove("hidden");
+hasilRiwayat.innerHTML="";
 }
 
-/* ANTRIAN */
-let currentRM="";
-function openAntrian(){
-  hideAll();
-  antrianPage.classList.remove("hidden");
-  loadAntrian();
+function loadRiwayat(){
+const rm=rmCari.value;
+hasilRiwayat.innerHTML="Loading...";
+let html="";
+
+db.ref("pasien/"+rm).once("value",p=>{
+if(!p.exists()){hasilRiwayat.innerHTML="Pasien tidak ditemukan";return;}
+html+=`<b>Nama:</b> ${p.val().nama}<hr>`;
+});
+
+db.ref("anamnesa/"+rm).once("value",a=>{
+if(a.exists()){
+html+="<h4>Anamnesa</h4>";
+a.forEach(x=>html+=`• ${x.val().keluhan}<br>`);
 }
-function loadAntrian(){
-  listAntrian.innerHTML="";
-  db.ref("pasien").orderByChild("status").equalTo("MENUNGGU")
-  .off();
-  db.ref("pasien").orderByChild("status").equalTo("MENUNGGU")
-  .on("child_added",snap=>{
-    const d=snap.val();
-    listAntrian.innerHTML+=`
-      <div class="list" onclick="panggil('${snap.key}','${d.nama}')">
-        ${d.nama}
-        <span class="badge wait">MENUNGGU</span>
-      </div>`;
-  });
+});
+
+db.ref("soap/"+rm).once("value",s=>{
+if(s.exists()){
+html+="<h4>SOAP</h4>";
+s.forEach(x=>{
+html+=`
+<b>Tanggal:</b> ${x.key}<br>
+S:${x.val().s}<br>
+O:${x.val().o}<br>
+A:${x.val().a}<br>
+P:${x.val().p}<hr>`;
+});
 }
-function panggil(rm,nama){
-  currentRM=rm;
-  db.ref("pasien/"+rm+"/status").set("DIPANGGIL");
-  openSOAP(nama);
+});
+
+db.ref("pembayaran/"+rm).once("value",b=>{
+if(b.exists()){
+html+="<h4>Pembayaran</h4>";
+b.forEach(x=>{
+html+=`<b>${x.key}</b> | Rp ${x.val().total} (${x.val().status})<br>`;
+});
+}
+setTimeout(()=>hasilRiwayat.innerHTML=html,500);
+});
 }
 
-/* SOAP */
-function openSOAP(nama){
-  hideAll();
-  soapPage.classList.remove("hidden");
-  soapNama.innerText=nama;
+/* OBAT */
+let keranjang=[],total=0;
+function openObat(){hideAll();obatPage.classList.remove("hidden");}
+function loadPasienBayar(){
+db.ref("pasien/"+rmBayar.value).once("value",s=>{
+infoBayar.innerText=s.exists()?"Pasien: "+s.val().nama:"Tidak ditemukan";
+});
 }
-function simpanSOAP(){
-  if(!currentRM){alert("RM tidak ditemukan");return;}
-  const t=new Date().toISOString();
-  db.ref("soap/"+currentRM+"/"+t).set({
-    S:S.value,O:O.value,A:A.value,P:P.value,
-    dokter:localStorage.getItem("user")
-  });
-  db.ref("pasien/"+currentRM+"/status").set("SELESAI");
-  alert("SOAP berhasil disimpan");
-  S.value=O.value=A.value=P.value="";
+function tambahObat(){
+keranjang.push({nama:namaObat.value,harga:Number(hargaObat.value)});
+renderObat();namaObat.value=hargaObat.value="";
+}
+function renderObat(){
+total=0;listObat.innerHTML="";
+keranjang.forEach(o=>{listObat.innerHTML+=`<tr><td>${o.nama}</td><td>${o.harga}</td></tr>`;total+=o.harga});
+totalBayar.innerText=total;
+}
+function simpanPembayaran(){
+db.ref("pembayaran/"+rmBayar.value+"/"+Date.now()).set({
+obat:keranjang,total,status:statusBayar.value,petugas:localStorage.getItem("emr_user")
+});
+alert("Pembayaran disimpan");keranjang=[];renderObat();
 }
 
 /* UTIL */
-function hideAll(){
-  daftarPage.classList.add("hidden");
-  antrianPage.classList.add("hidden");
-  soapPage.classList.add("hidden");
-}
-function logout(){
-  localStorage.clear();
-  location.reload();
-}
-if(localStorage.getItem("user")) showDashboard();
+function hideAll(){riwayatPage.classList.add("hidden");obatPage.classList.add("hidden");}
+function logout(){localStorage.clear();location.reload();}
+if(localStorage.getItem("emr_user"))showDashboard();
 </script>
+<script>
+async function cetakPDF(){
+  const rm = rmCari.value;
+  if(!rm){ alert("Masukkan No RM"); return; }
 
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  let y = 10;
+
+  pdf.setFontSize(14);
+  pdf.text("RIWAYAT MEDIS PASIEN", 105, y, {align:"center"});
+  y+=8;
+  pdf.setFontSize(10);
+  pdf.text("Klinik dr. H. DUDI RUHENDERA",105,y,{align:"center"});
+  y+=10;
+
+  // PASIEN
+  const pasien = await db.ref("pasien/"+rm).once("value");
+  if(!pasien.exists()){ alert("RM tidak ditemukan"); return; }
+
+  const p = pasien.val();
+  pdf.text(`No RM : ${rm}`,10,y); y+=6;
+  pdf.text(`Nama  : ${p.nama}`,10,y); y+=6;
+  pdf.text(`NIK   : ${p.nik}`,10,y); y+=6;
+  pdf.text(`JK    : ${p.jk}`,10,y); y+=6;
+  pdf.text(`Alamat: ${p.alamat}`,10,y); y+=8;
+
+  // ANAMNESA
+  const anam = await db.ref("anamnesa/"+rm).once("value");
+  if(anam.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("ANAMNESA",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+    anam.forEach(a=>{
+      pdf.text(`- ${a.val().keluhan}`,12,y);
+      y+=5;
+    });
+    y+=4;
+  }
+
+  // SOAP
+  const soap = await db.ref("soap/"+rm).once("value");
+  if(soap.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("SOAP DOKTER",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+    soap.forEach(s=>{
+      const v=s.val();
+      pdf.text(`Tanggal: ${s.key}`,12,y); y+=5;
+      pdf.text(`S: ${v.s}`,14,y); y+=5;
+      pdf.text(`O: ${v.o}`,14,y); y+=5;
+      pdf.text(`A: ${v.a}`,14,y); y+=5;
+      pdf.text(`P: ${v.p}`,14,y); y+=6;
+    });
+  }
+
+  // PEMBAYARAN
+  const bayar = await db.ref("pembayaran/"+rm).once("value");
+  if(bayar.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("OBAT & PEMBAYARAN",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+    bayar.forEach(b=>{
+      pdf.text(`Tanggal: ${b.key}`,12,y); y+=5;
+      pdf.text(`Total: Rp ${b.val().total}`,14,y); y+=5;
+      pdf.text(`Status: ${b.val().status}`,14,y); y+=6;
+    });
+  }
+
+  pdf.save(`RM_${rm}.pdf`);
+}
+</script>
+<script>
+async function cetakPDFRiwayat(){
+  const rm = rmCari.value;
+  if(!rm){
+    alert("Masukkan No RM terlebih dahulu");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p","mm","a4");
+  let y = 15;
+
+  /* ================= HEADER ================= */
+  pdf.setFontSize(14);
+  pdf.text("RIWAYAT MEDIS PASIEN",105,y,{align:"center"});
+  y+=7;
+  pdf.setFontSize(10);
+  pdf.text("Klinik dr. H. DUDI RUHENDERA",105,y,{align:"center"});
+  y+=5;
+  pdf.text("Tegalwangi, Kec. Weru, Kab. Cirebon",105,y,{align:"center"});
+  y+=10;
+
+  /* ================= DATA PASIEN ================= */
+  const pasienSnap = await db.ref("pasien/"+rm).once("value");
+  if(!pasienSnap.exists()){
+    alert("Data pasien tidak ditemukan");
+    return;
+  }
+
+  const p = pasienSnap.val();
+  pdf.setFontSize(10);
+  pdf.text(`No RM        : ${rm}`,10,y); y+=6;
+  pdf.text(`Nama Pasien  : ${p.nama}`,10,y); y+=6;
+  pdf.text(`NIK          : ${p.nik}`,10,y); y+=6;
+  pdf.text(`Jenis Kelamin: ${p.jk}`,10,y); y+=6;
+  pdf.text(`Alamat       : ${p.alamat}`,10,y); y+=8;
+
+  /* ================= ANAMNESA ================= */
+  const anamSnap = await db.ref("anamnesa/"+rm).once("value");
+  if(anamSnap.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("ANAMNESA",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+
+    anamSnap.forEach(a=>{
+      pdf.text(`- ${a.val().keluhan}`,12,y);
+      y+=5;
+      if(y>270){ pdf.addPage(); y=15; }
+    });
+    y+=5;
+  }
+
+  /* ================= SOAP ================= */
+  const soapSnap = await db.ref("soap/"+rm).once("value");
+  if(soapSnap.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("SOAP DOKTER",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+
+    soapSnap.forEach(s=>{
+      const v = s.val();
+      pdf.text(`Tanggal: ${s.key}`,12,y); y+=5;
+      pdf.text(`S: ${v.s}`,14,y); y+=5;
+      pdf.text(`O: ${v.o}`,14,y); y+=5;
+      pdf.text(`A: ${v.a}`,14,y); y+=5;
+      pdf.text(`P: ${v.p}`,14,y); y+=7;
+
+      if(y>270){ pdf.addPage(); y=15; }
+    });
+  }
+
+  /* ================= OBAT & PEMBAYARAN ================= */
+  const bayarSnap = await db.ref("pembayaran/"+rm).once("value");
+  if(bayarSnap.exists()){
+    pdf.setFont(undefined,"bold");
+    pdf.text("OBAT & PEMBAYARAN",10,y); y+=6;
+    pdf.setFont(undefined,"normal");
+
+    bayarSnap.forEach(b=>{
+      pdf.text(`Tanggal : ${b.key}`,12,y); y+=5;
+      pdf.text(`Total    : Rp ${b.val().total}`,14,y); y+=5;
+      pdf.text(`Status   : ${b.val().status}`,14,y); y+=7;
+
+      if(y>270){ pdf.addPage(); y=15; }
+    });
+  }
+
+  /* ================= FOOTER ================= */
+  y = 285;
+  pdf.setFontSize(8);
+  pdf.text("Dicetak dari Sistem Informasi EMR Klinik dr. H. DUDI RUHENDERA",105,y,{align:"center"});
+
+  /* ================= SAVE ================= */
+  pdf.save(`RM_${rm}_Riwayat_Medis.pdf`);
+}
+</script>
 </body>
 </html>
