@@ -10,44 +10,37 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-:root{
-  --primary:#0b5ed7;
-  --danger:#dc3545;
-  --bg:#f4f6f8;
-}
+:root{--p:#0b5ed7;--d:#dc3545;--bg:#f4f6f8}
 body{margin:0;font-family:Arial;background:var(--bg)}
 .hidden{display:none}
-header{background:var(--primary);color:#fff;padding:16px;text-align:center}
-.container{padding:20px;max-width:1000px;margin:auto}
+header{background:var(--p);color:#fff;padding:16px;text-align:center}
+.container{padding:20px;max-width:1100px;margin:auto}
 .card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-input,select,textarea,button{
-  width:100%;padding:12px;margin-top:8px;
-  border-radius:10px;border:1px solid #ccc
-}
-button{background:var(--primary);color:#fff;border:none;font-weight:bold;cursor:pointer}
-button.danger{background:var(--danger)}
+input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
+button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
+button.danger{background:var(--d)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
 small{color:#666}
+hr{border:none;border-top:1px solid #eee;margin:15px 0}
 </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <div id="loginPage">
-  <div class="container">
-    <div class="card">
-      <h2 style="text-align:center">LOGIN EMR</h2>
-      <input id="username" placeholder="Username">
-      <input id="pin" type="password" placeholder="PIN">
-      <button onclick="login()">MASUK</button>
-    </div>
-  </div>
+<div class="container">
+<div class="card">
+<h2 align="center">LOGIN EMR</h2>
+<input id="username" placeholder="Username">
+<input id="pin" type="password" placeholder="PIN">
+<button onclick="login()">MASUK</button>
+</div>
+</div>
 </div>
 
-<!-- ================= DASHBOARD ================= -->
+<!-- DASHBOARD -->
 <div id="dashboardPage" class="hidden">
-
 <header>
 <b>Sistem Informasi EMR</b><br>
 Klinik dr. H. DUDI RUHENDERA
@@ -56,28 +49,47 @@ Klinik dr. H. DUDI RUHENDERA
 <div class="container">
 
 <div class="card">
-Login sebagai <b id="userName"></b><br>
+Login: <b id="userName"></b><br>
 <small>Role: <b id="userRole"></b></small>
 </div>
 
 <div id="menu" class="grid"></div>
 
-<!-- ====== FORM PENDAFTARAN PASIEN ====== -->
+<!-- PENDAFTARAN -->
 <div id="pendaftaranPage" class="card hidden">
 <h3>Pendaftaran Pasien</h3>
-
 <input id="nama" placeholder="Nama Pasien">
 <input id="nik" placeholder="NIK">
 <input id="tgl" type="date">
 <select id="jk">
-  <option value="">Jenis Kelamin</option>
-  <option>Laki-laki</option>
-  <option>Perempuan</option>
+<option value="">Jenis Kelamin</option>
+<option>Laki-laki</option>
+<option>Perempuan</option>
 </select>
 <textarea id="alamat" placeholder="Alamat"></textarea>
 <input id="hp" placeholder="No HP">
-
 <button onclick="simpanPasien()">SIMPAN PASIEN</button>
+</div>
+
+<!-- ANAMNESA -->
+<div id="anamnesaPage" class="card hidden">
+<h3>Anamnesa Perawat</h3>
+
+<input id="rmCari" placeholder="No RM (contoh: RM...)">
+<button onclick="loadPasien()">CARI PASIEN</button>
+
+<hr>
+
+<b id="infoPasien"></b>
+
+<textarea id="keluhan" placeholder="Keluhan Utama"></textarea>
+<input id="td" placeholder="Tekanan Darah (mmHg)">
+<input id="nadi" placeholder="Nadi (/menit)">
+<input id="suhu" placeholder="Suhu (°C)">
+<input id="rr" placeholder="RR (/menit)">
+<textarea id="catatan" placeholder="Catatan Perawat"></textarea>
+
+<button onclick="simpanAnamnesa()">SIMPAN ANAMNESA</button>
 </div>
 
 <div class="card">
@@ -85,92 +97,91 @@ Login sebagai <b id="userName"></b><br>
 </div>
 
 </div>
-
 </div>
 
 <script>
-/* ================= USER ================= */
-const USERS = {
-  "H.dudi_ruhendra": { pin:"Qwerty1234", role:"Dokter (Admin)" },
-  "Username1": { pin:"User1", role:"Pendaftaran & Anamnesa" },
-  "User2": { pin:"Username2", role:"Obat & Pembayaran" }
+/* USER */
+const USERS={
+"H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
+"Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
+"User2":{pin:"Username2",role:"Obat & Pembayaran"}
 };
 
-/* ================= FIREBASE ================= */
-const firebaseConfig = {
-  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+/* FIREBASE */
+firebase.initializeApp({
+databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+});
+const db=firebase.database();
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 function login(){
-  const u=username.value.trim();
-  const p=pin.value.trim();
-  if(USERS[u] && USERS[u].pin===p){
-    localStorage.setItem("emr_user",u);
-    showDashboard();
-  }else alert("Username / PIN salah");
+if(USERS[username.value] && USERS[username.value].pin===pin.value){
+localStorage.setItem("emr_user",username.value);
+showDashboard();
+}else alert("Username / PIN salah");
 }
 
-/* ================= DASHBOARD ================= */
+/* DASHBOARD */
 function showDashboard(){
-  const u=localStorage.getItem("emr_user");
-  if(!u) return;
-  loginPage.classList.add("hidden");
-  dashboardPage.classList.remove("hidden");
-  userName.innerText=u;
-  userRole.innerText=USERS[u].role;
+const u=localStorage.getItem("emr_user");
+loginPage.classList.add("hidden");
+dashboardPage.classList.remove("hidden");
+userName.innerText=u;
+userRole.innerText=USERS[u].role;
 
-  let html="";
-  if(USERS[u].role.includes("Pendaftaran")){
-    html+=`<div class="card" onclick="openPendaftaran()"><b>Pendaftaran Pasien</b></div>`;
-  }
-  if(USERS[u].role.includes("Dokter")){
-    html+=`<div class="card"><b>SOAP Dokter</b></div>`;
-  }
-  if(USERS[u].role.includes("Obat")){
-    html+=`<div class="card"><b>Pembayaran</b></div>`;
-  }
-  menu.innerHTML=html;
+let m="";
+if(USERS[u].role.includes("Pendaftaran"))
+m+=`<div class="card" onclick="openPendaftaran()">Pendaftaran Pasien</div>
+<div class="card" onclick="openAnamnesa()">Anamnesa Perawat</div>`;
+if(USERS[u].role.includes("Dokter"))
+m+=`<div class="card">SOAP Dokter</div>`;
+if(USERS[u].role.includes("Obat"))
+m+=`<div class="card">Pembayaran</div>`;
+menu.innerHTML=m;
 }
 
-/* ================= PENDAFTARAN ================= */
+/* PENDAFTARAN */
 function openPendaftaran(){
-  pendaftaranPage.classList.remove("hidden");
+hideAll();pendaftaranPage.classList.remove("hidden");
 }
-
 function simpanPasien(){
-  if(!nama.value || !nik.value){
-    alert("Nama & NIK wajib diisi");
-    return;
-  }
-
-  const rm = "RM"+Date.now();
-
-  db.ref("pasien/"+rm).set({
-    nama: nama.value,
-    nik: nik.value,
-    tgl_lahir: tgl.value,
-    jk: jk.value,
-    alamat: alamat.value,
-    hp: hp.value,
-    created: new Date().toISOString()
-  });
-
-  alert("Pasien berhasil disimpan\nNo RM: "+rm);
-  nama.value=nik.value=tgl.value=alamat.value=hp.value="";
-  jk.value="";
+const rm="RM"+Date.now();
+db.ref("pasien/"+rm).set({
+nama:nama.value,nik:nik.value,tgl:tgl.value,
+jk:jk.value,alamat:alamat.value,hp:hp.value,
+created:new Date().toISOString()
+});
+alert("Pasien disimpan\nNo RM: "+rm);
 }
 
-/* ================= LOGOUT ================= */
-function logout(){
-  localStorage.clear();
-  location.reload();
+/* ANAMNESA */
+function openAnamnesa(){
+hideAll();anamnesaPage.classList.remove("hidden");
+}
+function loadPasien(){
+db.ref("pasien/"+rmCari.value).once("value",s=>{
+if(s.exists()){
+infoPasien.innerText="Pasien: "+s.val().nama;
+}else alert("Pasien tidak ditemukan");
+});
+}
+function simpanAnamnesa(){
+const t=new Date().toISOString();
+db.ref("anamnesa/"+rmCari.value+"/"+t).set({
+keluhan:keluhan.value,td:td.value,nadi:nadi.value,
+suhu:suhu.value,rr:rr.value,catatan:catatan.value,
+petugas:localStorage.getItem("emr_user")
+});
+alert("Anamnesa tersimpan");
 }
 
-/* ================= AUTO LOGIN ================= */
-if(localStorage.getItem("emr_user")) showDashboard();
+/* UTIL */
+function hideAll(){
+pendaftaranPage.classList.add("hidden");
+anamnesaPage.classList.add("hidden");
+}
+function logout(){localStorage.clear();location.reload();}
+if(localStorage.getItem("emr_user"))showDashboard();
 </script>
 
 </body>
