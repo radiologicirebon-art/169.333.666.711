@@ -59,84 +59,79 @@ th{background:#f8f9fa}
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="hidden">
-  <header>
-    <b>Sistem Informasi EMR</b><br>
-    Klinik dr. H. DUDI RUHENDERA
-  </header>
+<header>
+  <b>Sistem Informasi EMR</b><br>
+  Klinik dr. H. DUDI RUHENDERA
+</header>
 
-  <div class="container">
+<div class="container">
 
-    <div class="card">
-      Login: <b id="userName"></b><br>
-      Role: <span class="badge" id="userRole"></span>
-    </div>
+<div class="card">
+  Login: <b id="userName"></b><br>
+  Role: <span class="badge" id="userRole"></span>
+</div>
 
-    <div id="menu" class="grid"></div>
+<div id="menu" class="grid"></div>
 
-    <!-- RIWAYAT -->
-    <div id="riwayatPage" class="card hidden">
-      <h3>Riwayat Pasien</h3>
-      <div class="grid">
-        <input id="rmCari" placeholder="Nomor Rekam Medis">
-        <button onclick="loadRiwayat()">Cari</button>
-        <button class="secondary" onclick="cetakPDFRiwayat()">Cetak PDF</button>
-      </div>
-      <div id="hasilRiwayat" style="margin-top:15px"></div>
-    </div>
-
-    <!-- OBAT -->
-    <div id="obatPage" class="card hidden">
-      <h3>Obat & Pembayaran</h3>
-      <div class="grid">
-        <input id="rmBayar" placeholder="Nomor RM">
-        <button onclick="loadPasienBayar()">Cari Pasien</button>
-      </div>
-      <p><b id="infoBayar"></b></p>
-      <div class="grid">
-        <input id="namaObat" placeholder="Nama Obat">
-        <input id="hargaObat" type="number" placeholder="Harga">
-        <button onclick="tambahObat()">Tambah</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Obat</th><th>Harga</th></tr></thead>
-          <tbody id="listObat"></tbody>
-        </table>
-      </div>
-      <div class="total">Total: Rp <span id="totalBayar">0</span></div>
-      <select id="statusBayar">
-        <option value="LUNAS">LUNAS</option>
-        <option value="BELUM LUNAS">BELUM LUNAS</option>
-      </select>
-      <button onclick="simpanPembayaran()">Simpan Pembayaran</button>
-    </div>
-
-    <!-- BPJS -->
-    <div id="bpjsPage" class="card hidden">
-      <h3>Registrasi BPJS</h3>
-      <div class="grid">
-        <input id="bpjs_rm" placeholder="Nomor RM">
-        <input id="bpjs_noka" placeholder="No Kartu BPJS">
-        <input id="bpjs_nik" placeholder="NIK">
-        <select id="bpjs_poli">
-          <option value="UMUM">Poli Umum</option>
-          <option value="GIGI">Poli Gigi</option>
-          <option value="KIA">Poli KIA</option>
-        </select>
-      </div>
-      <button onclick="simpanBPJS()">Simpan BPJS</button>
-      <div id="bpjsInfo" style="margin-top:10px"></div>
-    </div>
-
-    <div class="card">
-      <button class="danger" onclick="logout()">Logout</button>
-    </div>
-
-    <div class="footer-note">
-      © EMR Klinik dr. H. DUDI RUHENDERA – Data bersifat rahasia
-    </div>
-
+<!-- PASIEN BARU -->
+<div id="pasienPage" class="card hidden">
+  <h3>Daftar Pasien Baru</h3>
+  <div class="grid">
+    <input id="p_rm" readonly placeholder="Nomor RM (Otomatis)">
+    <input id="p_nama" placeholder="Nama Pasien">
+    <input id="p_nik" placeholder="NIK">
+    <select id="p_jk">
+      <option value="">Jenis Kelamin</option>
+      <option value="L">Laki-laki</option>
+      <option value="P">Perempuan</option>
+    </select>
   </div>
+  <button onclick="simpanPasien()">Simpan Pasien</button>
+  <div id="pasienInfo"></div>
+</div>
+
+<!-- ANAMNESA -->
+<div id="anamnesaPage" class="card hidden">
+  <h3>Anamnesa Pasien</h3>
+  <div class="grid">
+    <input id="a_rm" placeholder="Nomor RM">
+    <textarea id="a_keluhan" placeholder="Keluhan utama pasien"></textarea>
+  </div>
+  <button onclick="simpanAnamnesa()">Simpan Anamnesa</button>
+  <div id="anamnesaInfo"></div>
+</div>
+
+<!-- RIWAYAT -->
+<div id="riwayatPage" class="card hidden">
+  <h3>Riwayat Pasien</h3>
+  <div class="grid">
+    <input id="rmCari" placeholder="Nomor Rekam Medis">
+    <button onclick="loadRiwayat()">Cari</button>
+  </div>
+  <div id="hasilRiwayat"></div>
+</div>
+
+<!-- OBAT -->
+<div id="obatPage" class="card hidden">
+  <h3>Obat & Pembayaran</h3>
+  <input id="rmBayar" placeholder="Nomor RM">
+</div>
+
+<!-- BPJS -->
+<div id="bpjsPage" class="card hidden">
+  <h3>Registrasi BPJS</h3>
+  <input id="bpjs_rm" placeholder="Nomor RM">
+</div>
+
+<div class="card">
+  <button class="danger" onclick="logout()">Logout</button>
+</div>
+
+<div class="footer-note">
+  © EMR Klinik dr. H. DUDI RUHENDERA – Data bersifat rahasia
+</div>
+
+</div>
 </div>
 
 <script>
@@ -157,7 +152,6 @@ const db=firebase.database();
 function login(){
   const u=username.value.trim();
   const p=pin.value.trim();
-  if(!u||!p) return alert("Lengkapi data");
   if(USERS[u] && USERS[u].pin===p){
     localStorage.setItem("emr_user",u);
     showDashboard();
@@ -173,23 +167,69 @@ function showDashboard(){
   userName.innerText=u;
   userRole.innerText=USERS[u].role;
 
-  menu.innerHTML=`
+  let html="";
+  if(USERS[u].role==="Pendaftaran & Anamnesa"){
+    html+=`
+      <div class="card menu-card" onclick="openPasien()">🧾 Daftar Pasien Baru</div>
+      <div class="card menu-card" onclick="openAnamnesa()">🩺 Anamnesa Pasien</div>`;
+  }
+  html+=`
     <div class="card menu-card" onclick="openRiwayat()">📁 Riwayat Pasien</div>
-    <div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>
-    <div class="card menu-card" onclick="openBPJS()">🩺 BPJS</div>
-  `;
+    <div class="card menu-card" onclick="openBPJS()">🩺 BPJS</div>`;
+  if(USERS[u].role==="Obat & Pembayaran"){
+    html+=`<div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>`;
+  }
+  if(USERS[u].role==="Dokter / Admin"){
+    html+=`
+      <div class="card menu-card" onclick="openPasien()">🧾 Daftar Pasien Baru</div>
+      <div class="card menu-card" onclick="openAnamnesa()">🩺 Anamnesa Pasien</div>
+      <div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>`;
+  }
+  menu.innerHTML=html;
 }
 
 /* UTIL */
 function hideAll(){
+  pasienPage.classList.add("hidden");
+  anamnesaPage.classList.add("hidden");
   riwayatPage.classList.add("hidden");
   obatPage.classList.add("hidden");
   bpjsPage.classList.add("hidden");
 }
-
+function openPasien(){hideAll();pasienPage.classList.remove("hidden");generateRM()}
+function openAnamnesa(){hideAll();anamnesaPage.classList.remove("hidden")}
 function openRiwayat(){hideAll();riwayatPage.classList.remove("hidden")}
 function openObat(){hideAll();obatPage.classList.remove("hidden")}
 function openBPJS(){hideAll();bpjsPage.classList.remove("hidden")}
+
+/* RM AUTO */
+function generateRM(){
+  const d=new Date();
+  p_rm.value="RM"+d.getFullYear().toString().slice(2)+(d.getMonth()+1).toString().padStart(2,"0")+d.getTime().toString().slice(-4);
+}
+
+/* SAVE */
+function simpanPasien(){
+  if(!p_nama.value) return alert("Nama pasien wajib");
+  db.ref("pasien/"+p_rm.value).set({
+    rm:p_rm.value,nama:p_nama.value,nik:p_nik.value,jk:p_jk.value,
+    petugas:localStorage.getItem("emr_user"),waktu:new Date().toISOString()
+  });
+  pasienInfo.innerHTML="<b>Pasien tersimpan</b>";
+  p_nama.value=p_nik.value="";
+  generateRM();
+}
+
+function simpanAnamnesa(){
+  if(!a_rm.value||!a_keluhan.value) return alert("Lengkapi anamnesa");
+  db.ref("anamnesa/"+a_rm.value+"/"+Date.now()).set({
+    keluhan:a_keluhan.value,
+    petugas:localStorage.getItem("emr_user"),
+    waktu:new Date().toISOString()
+  });
+  anamnesaInfo.innerHTML="<b>Anamnesa tersimpan</b>";
+  a_keluhan.value="";
+}
 
 function logout(){localStorage.clear();location.reload()}
 if(localStorage.getItem("emr_user")) showDashboard();
