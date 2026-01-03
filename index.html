@@ -1,8 +1,18 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EMR Klinik dr. H. DUDI RUHENDERA</title><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script><!-- jsPDF --><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>
+<title>EMR Klinik dr. H. DUDI RUHENDERA</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
 :root{
   --primary:#0b5ed7;
   --danger:#dc3545;
@@ -11,188 +21,150 @@
   --text:#212529;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:'Segoe UI',Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
+body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text)}
 .hidden{display:none}
-header{
-  background:var(--primary);
-  color:#fff;
-  padding:18px;
-  text-align:center;
-}
+header{background:var(--primary);color:#fff;padding:18px;text-align:center}
 .container{max-width:1400px;margin:auto;padding:20px}
-.card{
-  background:var(--card);
-  padding:20px;
-  border-radius:14px;
-  margin-bottom:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.08)
-}
-input,select,textarea,button{
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border-radius:10px;
-  border:1px solid #ced4da;
-  font-size:14px
-}
-textarea{min-height:80px}
-button{
-  background:var(--primary);
-  color:#fff;
-  border:none;
-  font-weight:600;
-  cursor:pointer
-}
-button.danger{background:var(--danger)}
+.card{background:var(--card);padding:20px;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ced4da;font-size:14px}
+button{background:var(--primary);color:#fff;border:none;font-weight:600;cursor:pointer}
 button.secondary{background:#6c757d}
+button.danger{background:var(--danger)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.menu-card{
-  text-align:center;
-  padding:30px 20px;
-  cursor:pointer;
-  font-weight:600
-}
+.menu-card{text-align:center;padding:30px 20px;cursor:pointer;font-weight:600}
 .menu-card:hover{background:#f1f5ff}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
 th,td{border:1px solid #dee2e6;padding:8px}
 th{background:#f8f9fa}
 .total{font-size:18px;font-weight:bold;text-align:right;margin-top:10px}
-.badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:20px;
-  font-size:12px;
-  background:#e9ecef
-}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;background:#e9ecef}
 .footer-note{font-size:11px;color:#666;text-align:center;margin-top:20px}
-</style></head>
-<body><!-- LOGIN --><div id="loginPage">
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
   <div class="container">
     <div class="card" style="max-width:420px;margin:auto">
       <h2 style="text-align:center">LOGIN EMR</h2>
-      <input id="username" placeholder="Username" autocomplete="off" />
-      <input id="pin" type="password" placeholder="PIN" />
+      <input id="username" placeholder="Username">
+      <input id="pin" type="password" placeholder="PIN">
       <button onclick="login()">MASUK</button>
     </div>
   </div>
-</div><!-- DASHBOARD --><div id="dashboardPage" class="hidden">
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardPage" class="hidden">
   <header>
-    <b>Sistem Informasi EMR</b><br />
+    <b>Sistem Informasi EMR</b><br>
     Klinik dr. H. DUDI RUHENDERA
-  </header>  <div class="container"><div class="card">
-  Login: <b id="userName"></b><br />
-  Role: <span class="badge" id="userRole"></span>
-</div>
+  </header>
 
-<div id="menu" class="grid"></div>
+  <div class="container">
 
-<!-- BPJS MODULE -->
-<div id="bpjsPage" class="card hidden">
-  <h3>Registrasi BPJS</h3>
-  <div class="grid">
-    <input id="bpjs_rm" placeholder="Nomor RM" />
-    <input id="bpjs_noka" placeholder="No Kartu BPJS" />
-    <input id="bpjs_nik" placeholder="NIK" />
-    <input id="bpjs_sep" placeholder="No SEP" />
-    <select id="bpjs_poli">
-      <option value="UMUM">Poli Umum</option>
-      <option value="GIGI">Poli Gigi</option>
-      <option value="KIA">Poli KIA</option>
-    </select>
-    <select id="bpjs_status">
-      <option value="AKTIF">Peserta Aktif</option>
-      <option value="NONAKTIF">Peserta Tidak Aktif</option>
-    </select>
-  </div>
-  <button onclick="simpanBPJS()">Simpan Data BPJS</button>
-  <div id="bpjsInfo" style="margin-top:10px"></div>
-</div>
+    <div class="card">
+      Login: <b id="userName"></b><br>
+      Role: <span class="badge" id="userRole"></span>
+    </div>
 
-<!-- RIWAYAT PASIEN -->
-<div id="riwayatPage" class="card hidden">
-  <h3>Riwayat Pasien</h3>
-  <div class="grid">
-    <input id="rmCari" placeholder="Nomor Rekam Medis" />
-    <button onclick="loadRiwayat()">Cari</button>
-    <button class="secondary" onclick="cetakPDFRiwayat()">Cetak PDF</button>
-  </div>
-  <div id="hasilRiwayat" style="margin-top:15px"></div>
-</div>
+    <div id="menu" class="grid"></div>
 
-<!-- OBAT & PEMBAYARAN -->
-<div id="obatPage" class="card hidden">
-  <h3>Obat & Pembayaran</h3>
-  <div class="grid">
-    <input id="rmBayar" placeholder="Nomor RM" />
-    <button onclick="loadPasienBayar()">Cari Pasien</button>
-  </div>
+    <!-- RIWAYAT -->
+    <div id="riwayatPage" class="card hidden">
+      <h3>Riwayat Pasien</h3>
+      <div class="grid">
+        <input id="rmCari" placeholder="Nomor Rekam Medis">
+        <button onclick="loadRiwayat()">Cari</button>
+        <button class="secondary" onclick="cetakPDFRiwayat()">Cetak PDF</button>
+      </div>
+      <div id="hasilRiwayat" style="margin-top:15px"></div>
+    </div>
 
-  <p><b id="infoBayar"></b></p>
+    <!-- OBAT -->
+    <div id="obatPage" class="card hidden">
+      <h3>Obat & Pembayaran</h3>
+      <div class="grid">
+        <input id="rmBayar" placeholder="Nomor RM">
+        <button onclick="loadPasienBayar()">Cari Pasien</button>
+      </div>
+      <p><b id="infoBayar"></b></p>
+      <div class="grid">
+        <input id="namaObat" placeholder="Nama Obat">
+        <input id="hargaObat" type="number" placeholder="Harga">
+        <button onclick="tambahObat()">Tambah</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Obat</th><th>Harga</th></tr></thead>
+          <tbody id="listObat"></tbody>
+        </table>
+      </div>
+      <div class="total">Total: Rp <span id="totalBayar">0</span></div>
+      <select id="statusBayar">
+        <option value="LUNAS">LUNAS</option>
+        <option value="BELUM LUNAS">BELUM LUNAS</option>
+      </select>
+      <button onclick="simpanPembayaran()">Simpan Pembayaran</button>
+    </div>
 
-  <div class="grid">
-    <input id="namaObat" placeholder="Nama Obat" />
-    <input id="hargaObat" type="number" placeholder="Harga" />
-    <button onclick="tambahObat()">Tambah</button>
-  </div>
+    <!-- BPJS -->
+    <div id="bpjsPage" class="card hidden">
+      <h3>Registrasi BPJS</h3>
+      <div class="grid">
+        <input id="bpjs_rm" placeholder="Nomor RM">
+        <input id="bpjs_noka" placeholder="No Kartu BPJS">
+        <input id="bpjs_nik" placeholder="NIK">
+        <select id="bpjs_poli">
+          <option value="UMUM">Poli Umum</option>
+          <option value="GIGI">Poli Gigi</option>
+          <option value="KIA">Poli KIA</option>
+        </select>
+      </div>
+      <button onclick="simpanBPJS()">Simpan BPJS</button>
+      <div id="bpjsInfo" style="margin-top:10px"></div>
+    </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Obat</th><th>Harga (Rp)</th></tr></thead>
-      <tbody id="listObat"></tbody>
-    </table>
-  </div>
+    <div class="card">
+      <button class="danger" onclick="logout()">Logout</button>
+    </div>
 
-  <div class="total">Total: Rp <span id="totalBayar">0</span></div>
-
-  <select id="statusBayar">
-    <option value="LUNAS">LUNAS</option>
-    <option value="BELUM LUNAS">BELUM LUNAS</option>
-  </select>
-
-  <button onclick="simpanPembayaran()">Simpan Pembayaran</button>
-</div>
-
-<div class="card">
-  <button class="danger" onclick="logout()">Logout</button>
-</div>
-
-<div class="footer-note">
-  © EMR Klinik dr. H. DUDI RUHENDERA – Data bersifat rahasia
-</div>
+    <div class="footer-note">
+      © EMR Klinik dr. H. DUDI RUHENDERA – Data bersifat rahasia
+    </div>
 
   </div>
-</div><script>
-/* ================= USER ================= */
+</div>
+
+<script>
+/* USERS */
 const USERS={
   "H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter / Admin"},
   "Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
   "User2":{pin:"Username2",role:"Obat & Pembayaran"}
 };
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 firebase.initializeApp({
   databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
 const db=firebase.database();
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 function login(){
   const u=username.value.trim();
   const p=pin.value.trim();
-  if(!u||!p) return alert("Lengkapi username dan PIN");
+  if(!u||!p) return alert("Lengkapi data");
   if(USERS[u] && USERS[u].pin===p){
     localStorage.setItem("emr_user",u);
     showDashboard();
-  }else alert("Username atau PIN salah");
+  }else alert("Login salah");
 }
 
-/* ================= DASHBOARD ================= */
+/* DASHBOARD */
 function showDashboard(){
   const u=localStorage.getItem("emr_user");
   if(!u) return;
@@ -206,193 +178,22 @@ function showDashboard(){
     <div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>
     <div class="card menu-card" onclick="openBPJS()">🩺 BPJS</div>
   `;
-    <div class="card menu-card" onclick="openRiwayat()">📁 Riwayat Pasien</div>
-    <div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>
-  `;
 }
 
-/* ================= RIWAYAT ================= */
-function openRiwayat(){hideAll();riwayatPage.classList.remove("hidden");hasilRiwayat.innerHTML=""}
-
-async function loadRiwayat(){
-  const rm=rmCari.value.trim();
-  if(!rm) return alert("Masukkan Nomor RM");
-  hasilRiwayat.innerHTML="Memuat data...";
-
-  const pasien=await db.ref("pasien/"+rm).once("value");
-  if(!pasien.exists()){hasilRiwayat.innerHTML="Pasien tidak ditemukan";return;}
-
-  let html=`<b>Nama:</b> ${pasien.val().nama}<hr>`;
-
-  const anam=await db.ref("anamnesa/"+rm).once("value");
-  if(anam.exists()){
-    html+="<h4>Anamnesa</h4>";
-    anam.forEach(a=>html+=`• ${a.val().keluhan}<br>`);
-  }
-
-  const soap=await db.ref("soap/"+rm).once("value");
-  if(soap.exists()){
-    html+="<h4>SOAP Dokter</h4>";
-    soap.forEach(s=>{
-      const v=s.val();
-      html+=`<b>${s.key}</b><br>S:${v.s}<br>O:${v.o}<br>A:${v.a}<br>P:${v.p}<hr>`;
-    });
-  }
-
-  hasilRiwayat.innerHTML=html;
+/* UTIL */
+function hideAll(){
+  riwayatPage.classList.add("hidden");
+  obatPage.classList.add("hidden");
+  bpjsPage.classList.add("hidden");
 }
 
-/* ================= OBAT ================= */
-let keranjang=[];
-
+function openRiwayat(){hideAll();riwayatPage.classList.remove("hidden")}
 function openObat(){hideAll();obatPage.classList.remove("hidden")}
-
-async function loadPasienBayar(){
-  const rm=rmBayar.value.trim();
-  if(!rm) return;
-  const s=await db.ref("pasien/"+rm).once("value");
-  infoBayar.innerText=s.exists()?`Pasien: ${s.val().nama}`:"Pasien tidak ditemukan";
-}
-
-function tambahObat(){
-  if(!namaObat.value||!hargaObat.value) return alert("Isi nama dan harga obat");
-  keranjang.push({nama:namaObat.value,harga:Number(hargaObat.value)});
-  namaObat.value="";hargaObat.value="";
-  renderObat();
-}
-
-function renderObat(){
-  let total=0;listObat.innerHTML="";
-  keranjang.forEach(o=>{total+=o.harga;listObat.innerHTML+=`<tr><td>${o.nama}</td><td>${o.harga}</td></tr>`});
-  totalBayar.innerText=total;
-}
-
-async function simpanPembayaran(){
-  if(!rmBayar.value||keranjang.length===0) return alert("Data belum lengkap");
-  await db.ref(`pembayaran/${rmBayar.value}/${Date.now()}`).set({
-    obat:keranjang,
-    total:Number(totalBayar.innerText),
-    status:statusBayar.value,
-    petugas:localStorage.getItem("emr_user")
-  });
-  alert("Pembayaran tersimpan");
-  keranjang=[];renderObat();
-}
-
-/* ================= BPJS BRIDGING (VCLAIM READY) ================= */
-
-// SIMULASI / MOCK VCLAIM (SIAP DIGANTI API ASLI)
-async function cekPesertaBPJS(noKartu){
-  // MOCK RESPONSE
-  return {
-    status:true,
-    nama:"PESERTA BPJS",
-    kelas:"Kelas 2",
-    faskes:"Klinik dr. H. DUDI RUHENDERA"
-  };
-}
-
-async function generateSEP(data){
-  // MOCK SEP GENERATOR
-  return "SEP"+Date.now();
-}
-
-function openBPJS(){hideAll();bpjsPage.classList.remove("hidden");bpjsInfo.innerHTML=""}
-
-async function simpanBPJS(){
-  const rm = bpjs_rm.value.trim();
-  if(!rm || !bpjs_noka.value){ alert("Lengkapi RM dan No BPJS"); return; }
-
-  // CEK PESERTA (MOCK)
-  const peserta = await cekPesertaBPJS(bpjs_noka.value);
-  if(!peserta.status){ alert("Peserta BPJS tidak aktif"); return; }
-
-  // GENERATE SEP
-  const sep = await generateSEP();
-
-  await db.ref(`bpjs/${rm}/${Date.now()}`).set({
-    rm: rm,
-    noKartu: bpjs_noka.value,
-    nik: bpjs_nik.value,
-    sep: sep,
-    poli: bpjs_poli.value,
-    kelas: peserta.kelas,
-    faskes: peserta.faskes,
-    status: "AKTIF",
-    petugas: localStorage.getItem("emr_user"),
-    waktu: new Date().toISOString()
-  });
-
-  bpjsInfo.innerHTML = `<b>SEP BERHASIL DIBUAT</b><br>No SEP: ${sep}<br>Nama: ${peserta.nama}<br>Kelas: ${peserta.kelas}`;
-
-  bpjs_rm.value=bpjs_noka.value=bpjs_nik.value="";
-}
-
-/* ================= PDF ================= */
 function openBPJS(){hideAll();bpjsPage.classList.remove("hidden")}
 
-async function simpanBPJS(){
-  const rm = bpjs_rm.value.trim();
-  if(!rm || !bpjs_noka.value || !bpjs_sep.value){
-    alert("Lengkapi data BPJS"); return;
-  }
-
-  await db.ref(`bpjs/${rm}/${Date.now()}`).set({
-    rm: rm,
-    noKartu: bpjs_noka.value,
-    nik: bpjs_nik.value,
-    sep: bpjs_sep.value,
-    poli: bpjs_poli.value,
-    status: bpjs_status.value,
-    petugas: localStorage.getItem("emr_user"),
-    waktu: new Date().toISOString()
-  });
-
-  bpjsInfo.innerHTML = `<b>Data BPJS tersimpan</b><br>No SEP: ${bpjs_sep.value}`;
-  bpjs_rm.value=bpjs_noka.value=bpjs_nik.value=bpjs_sep.value="";
-}
-
-/* ================= PDF ================= */
-async function cetakPDFRiwayat(){
-  const rm=rmCari.value.trim();
-  if(!rm) return alert("Masukkan Nomor RM");
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF();
-  let y=15;
-
-  pdf.setFontSize(14);
-  pdf.text("RIWAYAT MEDIS PASIEN",105,y,{align:"center"});y+=8;
-  pdf.setFontSize(10);
-  pdf.text("Klinik dr. H. DUDI RUHENDERA",105,y,{align:"center"});y+=10;
-
-  const pasien=await db.ref("pasien/"+rm).once("value");
-  if(!pasien.exists()) return alert("RM tidak ditemukan");
-  const p=pasien.val();
-
-  pdf.text(`No RM : ${rm}`,10,y);y+=6;
-  pdf.text(`Nama  : ${p.nama}`,10,y);y+=6;
-  pdf.text(`NIK   : ${p.nik}`,10,y);y+=6;
-  pdf.text(`JK    : ${p.jk}`,10,y);y+=8;
-
-  const anam=await db.ref("anamnesa/"+rm).once("value");
-  if(anam.exists()){
-    pdf.text("ANAMNESA",10,y);y+=6;
-    anam.forEach(a=>{pdf.text(`- ${a.val().keluhan}`,12,y);y+=5});
-    y+=5;
-  }
-
-  const soap=await db.ref("soap/"+rm).once("value");
-  if(soap.exists()){
-    pdf.text("SOAP DOKTER",10,y);y+=6;
-    soap.forEach(s=>{const v=s.val();pdf.text(`S:${v.s}`,12,y);y+=5;pdf.text(`O:${v.o}`,12,y);y+=5;pdf.text(`A:${v.a}`,12,y);y+=5;pdf.text(`P:${v.p}`,12,y);y+=6});
-  }
-
-  pdf.save(`RM_${rm}.pdf`);
-}
-
-/* ================= UTIL ================= */
-function hideAll(){riwayatPage.classList.add("hidden");obatPage.classList.add("hidden");bpjsPage.classList.add("hidden")}riwayatPage.classList.add("hidden");obatPage.classList.add("hidden")}
 function logout(){localStorage.clear();location.reload()}
 if(localStorage.getItem("emr_user")) showDashboard();
-</script></body>
+</script>
+
+</body>
 </html>
