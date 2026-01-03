@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Informasi EMR - Klinik dr. H. DUDI RUHENDERA</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{--p:#0b5ed7;--d:#dc3545;--bg:#f4f6f8}
+body{margin:0;font-family:Arial;background:var(--bg)}
+.hidden{display:none}
+header{background:var(--p);color:#fff;padding:16px;text-align:center}
+.container{padding:20px;max-width:1400px;margin:auto}
+.card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
+textarea{min-height:70px}
+button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
+button.danger{background:var(--d)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px}
+th{background:#f2f2f2}
+.total{font-size:20px;font-weight:bold;text-align:right}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+<div class="container">
+<div class="card">
+<h2 align="center">LOGIN EMR</h2>
+<input id="username" placeholder="Username">
+<input id="pin" type="password" placeholder="PIN">
+<button onclick="login()">MASUK</button>
+</div>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardPage" class="hidden">
+<header>
+<b>Sistem Informasi EMR</b><br>
+Klinik dr. H. DUDI RUHENDERA
+</header>
+
+<div class="container">
+
+<div class="card">
+Login: <b id="userName"></b><br>
+Role: <b id="userRole"></b>
+</div>
+
+<div id="menu" class="grid"></div>
+
+<!-- RIWAYAT PASIEN -->
+<div id="riwayatPage" class="card hidden">
+<h3>Riwayat Pasien</h3>
+<input id="rmCari" placeholder="Masukkan No RM">
+<button onclick="loadRiwayat()">CARI RIWAYAT</button>
+
+<div id="hasilRiwayat"></div>
+</div>
+
+<!-- OBAT & PEMBAYARAN -->
+<div id="obatPage" class="card hidden">
+<h3>Obat & Pembayaran</h3>
+<input id="rmBayar" placeholder="No RM">
+<button onclick="loadPasienBayar()">CARI PASIEN</button>
+
+<hr>
+<b id="infoBayar"></b>
+
+<input id="namaObat" placeholder="Nama Obat">
+<input id="hargaObat" type="number" placeholder="Harga">
+<button onclick="tambahObat()">TAMBAH OBAT</button>
+
+<table>
+<thead><tr><th>Obat</th><th>Harga</th></tr></thead>
+<tbody id="listObat"></tbody>
+</table>
+
+<div class="total">TOTAL: Rp <span id="totalBayar">0</span></div>
+
+<select id="statusBayar">
+<option>LUNAS</option>
+<option>BELUM LUNAS</option>
+</select>
+
+<button onclick="simpanPembayaran()">SIMPAN PEMBAYARAN</button>
+</div>
+
+<div class="card">
+<button class="danger" onclick="logout()">LOGOUT</button>
+</div>
+
+</div>
+</div>
+
+<script>
+/* USER */
+const USERS={
+"H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
+"Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
+"User2":{pin:"Username2",role:"Obat & Pembayaran"}
+};
+
+/* FIREBASE */
+firebase.initializeApp({
+databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+});
+const db=firebase.database();
+
+/* LOGIN */
+function login(){
+if(USERS[username.value] && USERS[username.value].pin===pin.value){
+localStorage.setItem("emr_user",username.value);
+showDashboard();
+}else alert("Username / PIN salah");
+}
+
+/* DASHBOARD */
+function showDashboard(){
+const u=localStorage.getItem("emr_user");
+loginPage.classList.add("hidden");
+dashboardPage.classList.remove("hidden");
+userName.innerText=u;
+userRole.innerText=USERS[u].role;
+
+menu.innerHTML=`
+<div class="card" onclick="openRiwayat()">Riwayat Pasien</div>
+<div class="card" onclick="openObat()">Obat & Pembayaran</div>`;
+}
+
+/* RIWAYAT */
+function openRiwayat(){
+hideAll();riwayatPage.classList.remove("hidden");
+hasilRiwayat.innerHTML="";
+}
+
+function loadRiwayat(){
+const rm=rmCari.value;
+hasilRiwayat.innerHTML="Loading...";
+let html="";
+
+db.ref("pasien/"+rm).once("value",p=>{
+if(!p.exists()){hasilRiwayat.innerHTML="Pasien tidak ditemukan";return;}
+html+=`<b>Nama:</b> ${p.val().nama}<hr>`;
+});
+
+db.ref("anamnesa/"+rm).once("value",a=>{
+if(a.exists()){
+html+="<h4>Anamnesa</h4>";
+a.forEach(x=>html+=`• ${x.val().keluhan}<br>`);
+}
+});
+
+db.ref("soap/"+rm).once("value",s=>{
+if(s.exists()){
+html+="<h4>SOAP</h4>";
+s.forEach(x=>{
+html+=`
+<b>Tanggal:</b> ${x.key}<br>
+S:${x.val().s}<br>
+O:${x.val().o}<br>
+A:${x.val().a}<br>
+P:${x.val().p}<hr>`;
+});
+}
+});
+
+db.ref("pembayaran/"+rm).once("value",b=>{
+if(b.exists()){
+html+="<h4>Pembayaran</h4>";
+b.forEach(x=>{
+html+=`<b>${x.key}</b> | Rp ${x.val().total} (${x.val().status})<br>`;
+});
+}
+setTimeout(()=>hasilRiwayat.innerHTML=html,500);
+});
+}
+
+/* OBAT */
+let keranjang=[],total=0;
+function openObat(){hideAll();obatPage.classList.remove("hidden");}
+function loadPasienBayar(){
+db.ref("pasien/"+rmBayar.value).once("value",s=>{
+infoBayar.innerText=s.exists()?"Pasien: "+s.val().nama:"Tidak ditemukan";
+});
+}
+function tambahObat(){
+keranjang.push({nama:namaObat.value,harga:Number(hargaObat.value)});
+renderObat();namaObat.value=hargaObat.value="";
+}
+function renderObat(){
+total=0;listObat.innerHTML="";
+keranjang.forEach(o=>{listObat.innerHTML+=`<tr><td>${o.nama}</td><td>${o.harga}</td></tr>`;total+=o.harga});
+totalBayar.innerText=total;
+}
+function simpanPembayaran(){
+db.ref("pembayaran/"+rmBayar.value+"/"+Date.now()).set({
+obat:keranjang,total,status:statusBayar.value,petugas:localStorage.getItem("emr_user")
+});
+alert("Pembayaran disimpan");keranjang=[];renderObat();
+}
+
+/* UTIL */
+function hideAll(){riwayatPage.classList.add("hidden");obatPage.classList.add("hidden");}
+function logout(){localStorage.clear();location.reload();}
+if(localStorage.getItem("emr_user"))showDashboard();
+</script>
+
+</body>
+</html>
