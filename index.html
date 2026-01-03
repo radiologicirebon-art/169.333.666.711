@@ -3,26 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Informasi EMR - Klinik dr. H. DUDI RUHENDERA</title>
+<title>EMR Klinik dr. H. DUDI RUHENDERA</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-:root{--p:#0b5ed7;--d:#dc3545;--bg:#f4f6f8}
+:root{--p:#0b5ed7;--bg:#f4f6f8}
 body{margin:0;font-family:Arial;background:var(--bg)}
 .hidden{display:none}
-header{background:var(--p);color:#fff;padding:16px;text-align:center}
+header{background:var(--p);color:#fff;padding:15px;text-align:center}
 .container{padding:20px;max-width:1100px;margin:auto}
-.card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
-textarea{min-height:70px}
+.card{background:#fff;padding:20px;border-radius:12px;margin-bottom:15px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+input,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:8px;border:1px solid #ccc}
 button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
-button.danger{background:var(--d)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-small{color:#666}
-hr{border:none;border-top:1px solid #eee;margin:15px 0}
+.list{padding:10px;border-bottom:1px solid #eee}
+.big{font-size:48px;text-align:center}
 </style>
 </head>
 
@@ -30,79 +26,68 @@ hr{border:none;border-top:1px solid #eee;margin:15px 0}
 
 <!-- LOGIN -->
 <div id="loginPage">
-  <div class="container">
-    <div class="card">
-      <h2 align="center">LOGIN EMR</h2>
-      <input id="username" placeholder="Username">
-      <input id="pin" type="password" placeholder="PIN">
-      <button onclick="login()">MASUK</button>
-    </div>
-  </div>
+<div class="container">
+<div class="card">
+<h2 align="center">LOGIN EMR</h2>
+<input id="username" placeholder="Username">
+<input id="pin" type="password">
+<button onclick="login()">MASUK</button>
+</div>
+</div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="hidden">
-<header>
-<b>Sistem Informasi EMR</b><br>
-Klinik dr. H. DUDI RUHENDERA
-</header>
-
+<header>EMR KLINIK dr. H. DUDI RUHENDERA</header>
 <div class="container">
 
 <div class="card">
-Login: <b id="userName"></b><br>
-<small>Role: <b id="userRole"></b></small>
-</div>
-
-<div id="menu" class="grid"></div>
-
-<!-- PENDAFTARAN & ANAMNESA -->
-<div id="pendaftaranAnamnesaPage" class="card hidden">
-<h3>Pendaftaran & Anamnesa Pasien</h3>
-
-<h4>🧾 Data Pasien</h4>
-<input id="nama" placeholder="Nama Pasien">
-<input id="nik" placeholder="NIK">
-<input id="tgl" type="date">
-<select id="jk">
-<option value="">Jenis Kelamin</option>
-<option>Laki-laki</option>
-<option>Perempuan</option>
-</select>
-<textarea id="alamat" placeholder="Alamat"></textarea>
-<input id="hp" placeholder="No HP">
-
-<hr>
-
-<h4>🩺 Anamnesa Perawat</h4>
-<small>No RM otomatis setelah simpan</small><br>
-<b id="rmInfo"></b>
-
-<textarea id="keluhan" placeholder="Keluhan Utama"></textarea>
-<input id="td" placeholder="Tekanan Darah (mmHg)">
-<input id="nadi" placeholder="Nadi (/menit)">
-<input id="suhu" placeholder="Suhu (°C)">
-<input id="rr" placeholder="RR (/menit)">
-<textarea id="catatan" placeholder="Catatan Perawat"></textarea>
-
-<button onclick="simpanPendaftaranAnamnesa()">
-SIMPAN PASIEN & ANAMNESA
-</button>
+Login: <b id="userName"></b> | Role: <b id="userRole"></b>
 </div>
 
 <div class="card">
-<button class="danger" onclick="logout()">LOGOUT</button>
+<button onclick="openDaftar()">Pendaftaran</button>
+<button onclick="openDokter()">Dokter</button>
+<button onclick="openTV()">📺 TV Antrian</button>
 </div>
 
+<!-- PENDAFTARAN -->
+<div id="daftarPage" class="card hidden">
+<h3>Pendaftaran Pasien</h3>
+<input id="nama" placeholder="Nama Pasien">
+<button onclick="simpanPasien()">SIMPAN</button>
+</div>
+
+<!-- DOKTER -->
+<div id="dokterPage" class="card hidden">
+<h3>Antrian Dokter</h3>
+<div id="listAntrian"></div>
+
+<hr>
+<h3>SOAP</h3>
+<b id="soapRM"></b>
+<textarea id="soapText" placeholder="SOAP Dokter"></textarea>
+<button onclick="simpanSOAP()">SIMPAN SOAP</button>
+</div>
+
+</div>
+</div>
+
+<!-- TV ANTRIAN -->
+<div id="tvPage" class="hidden">
+<header style="font-size:30px">📺 ANTRIAN POLI</header>
+<div class="container">
+<div class="card">
+<div id="tvNama" class="big">MENUNGGU...</div>
+</div>
 </div>
 </div>
 
 <script>
 /* USER */
 const USERS={
-  "H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
-  "Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
-  "User2":{pin:"Username2",role:"Obat & Pembayaran"}
+  dokter:{pin:"123",role:"Dokter"},
+  daftar:{pin:"123",role:"Pendaftaran"}
 };
 
 /* FIREBASE */
@@ -114,72 +99,86 @@ const db=firebase.database();
 /* LOGIN */
 function login(){
   if(USERS[username.value] && USERS[username.value].pin===pin.value){
-    localStorage.setItem("emr_user",username.value);
+    localStorage.setItem("u",username.value);
     showDashboard();
-  } else alert("Username / PIN salah");
+  } else alert("Login salah");
 }
 
-/* DASHBOARD */
 function showDashboard(){
-  const u=localStorage.getItem("emr_user");
   loginPage.classList.add("hidden");
   dashboardPage.classList.remove("hidden");
-  userName.innerText=u;
-  userRole.innerText=USERS[u].role;
-
-  let m="";
-  if(USERS[u].role.includes("Pendaftaran")){
-    m+=`<div class="card" onclick="openPendaftaranAnamnesa()">Pendaftaran & Anamnesa</div>`;
-  }
-  menu.innerHTML=m;
+  userName.innerText=localStorage.getItem("u");
+  userRole.innerText=USERS[localStorage.getItem("u")].role;
 }
 
-/* PENDAFTARAN + ANAMNESA */
-let currentRM="";
-
-function openPendaftaranAnamnesa(){
-  hideAll();
-  pendaftaranAnamnesaPage.classList.remove("hidden");
+/* NAV */
+function hideAll(){
+  daftarPage.classList.add("hidden");
+  dokterPage.classList.add("hidden");
 }
+function openDaftar(){ hideAll(); daftarPage.classList.remove("hidden"); }
+function openDokter(){ hideAll(); dokterPage.classList.remove("hidden"); loadAntrian(); }
+function openTV(){ window.open("index.html?tv=1","_blank"); }
 
-function simpanPendaftaranAnamnesa(){
-  if(!nama.value){ alert("Nama pasien wajib diisi"); return; }
-
-  currentRM="RM"+Date.now();
-
-  db.ref("pasien/"+currentRM).set({
+/* DAFTAR */
+function simpanPasien(){
+  const rm="RM"+Date.now();
+  db.ref("pasien/"+rm).set({
     nama:nama.value,
-    nik:nik.value,
-    tgl:tgl.value,
-    jk:jk.value,
-    alamat:alamat.value,
-    hp:hp.value,
+    status:"ANTRI",
     created:new Date().toISOString()
   });
+  alert("Pasien masuk antrian");
+}
 
-  db.ref("anamnesa/"+currentRM+"/"+new Date().toISOString()).set({
-    keluhan:keluhan.value,
-    td:td.value,
-    nadi:nadi.value,
-    suhu:suhu.value,
-    rr:rr.value,
-    catatan:catatan.value,
-    petugas:localStorage.getItem("emr_user")
+/* DOKTER */
+let aktifRM="";
+function loadAntrian(){
+  db.ref("pasien").orderByChild("status").equalTo("ANTRI")
+  .on("value",s=>{
+    listAntrian.innerHTML="";
+    s.forEach(x=>{
+      listAntrian.innerHTML+=`
+      <div class="list">
+        ${x.val().nama}
+        <button onclick="panggil('${x.key}','${x.val().nama}')">PANGGIL</button>
+      </div>`;
+    });
   });
-
-  rmInfo.innerHTML="<br><b>No RM: "+currentRM+"</b>";
-  alert("Pendaftaran & Anamnesa berhasil disimpan");
 }
 
-/* UTIL */
-function hideAll(){
-  pendaftaranAnamnesaPage.classList.add("hidden");
+function panggil(rm,nama){
+  aktifRM=rm;
+  soapRM.innerText="RM: "+rm+" | "+nama;
+  db.ref("pasien/"+rm+"/status").set("DIPANGGIL");
 }
-function logout(){
-  localStorage.clear();
-  location.reload();
+
+function simpanSOAP(){
+  db.ref("soap/"+aktifRM).set({
+    soap:soapText.value,
+    dokter:localStorage.getItem("u"),
+    waktu:new Date().toISOString()
+  });
+  db.ref("pasien/"+aktifRM+"/status").set("SELESAI");
+  alert("SOAP tersimpan");
 }
-if(localStorage.getItem("emr_user")) showDashboard();
+
+/* TV MODE */
+function showTV(){
+  loginPage.classList.add("hidden");
+  dashboardPage.classList.add("hidden");
+  tvPage.classList.remove("hidden");
+
+  db.ref("pasien").orderByChild("status").equalTo("DIPANGGIL")
+  .on("value",s=>{
+    let nama="MENUNGGU...";
+    s.forEach(x=>nama=x.val().nama);
+    tvNama.innerText=nama;
+  });
+}
+
+if(new URLSearchParams(location.search).get("tv")==="1") showTV();
+if(localStorage.getItem("u")) showDashboard();
 </script>
 
 </body>
