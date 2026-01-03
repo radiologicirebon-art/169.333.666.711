@@ -5,44 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistem Informasi EMR - Klinik dr. H. DUDI RUHENDERA</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-:root{--p:#0b5ed7;--d:#dc3545;--bg:#f4f6f8}
+:root{
+  --primary:#0b5ed7;
+  --danger:#dc3545;
+  --bg:#f4f6f8;
+}
 body{margin:0;font-family:Arial;background:var(--bg)}
 .hidden{display:none}
-header{background:var(--p);color:#fff;padding:16px;text-align:center}
-.container{padding:20px;max-width:1400px;margin:auto}
+header{background:var(--primary);color:#fff;padding:16px;text-align:center}
+.container{padding:20px;max-width:1000px;margin:auto}
 .card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
-textarea{min-height:70px}
-button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
-button.danger{background:var(--d)}
+input,select,textarea,button{
+  width:100%;padding:12px;margin-top:8px;
+  border-radius:10px;border:1px solid #ccc
+}
+button{background:var(--primary);color:#fff;border:none;font-weight:bold;cursor:pointer}
+button.danger{background:var(--danger)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ddd;padding:8px}
-th{background:#f2f2f2}
-.total{font-size:20px;font-weight:bold;text-align:right}
+small{color:#666}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- ================= LOGIN ================= -->
 <div id="loginPage">
-<div class="container">
-<div class="card">
-<h2 align="center">LOGIN EMR</h2>
-<input id="username" placeholder="Username">
-<input id="pin" type="password" placeholder="PIN">
-<button onclick="login()">MASUK</button>
-</div>
-</div>
+  <div class="container">
+    <div class="card">
+      <h2 style="text-align:center">LOGIN EMR</h2>
+      <input id="username" placeholder="Username">
+      <input id="pin" type="password" placeholder="PIN">
+      <button onclick="login()">MASUK</button>
+    </div>
+  </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- ================= DASHBOARD ================= -->
 <div id="dashboardPage" class="hidden">
+
 <header>
 <b>Sistem Informasi EMR</b><br>
 Klinik dr. H. DUDI RUHENDERA
@@ -51,47 +56,28 @@ Klinik dr. H. DUDI RUHENDERA
 <div class="container">
 
 <div class="card">
-Login: <b id="userName"></b><br>
-Role: <b id="userRole"></b>
+Login sebagai <b id="userName"></b><br>
+<small>Role: <b id="userRole"></b></small>
 </div>
 
 <div id="menu" class="grid"></div>
 
-<!-- RIWAYAT PASIEN -->
-<div id="riwayatPage" class="card hidden">
-<h3>Riwayat Pasien</h3>
-<input id="rmCari" placeholder="Masukkan No RM">
-<button onclick="loadRiwayat()">CARI RIWAYAT</button>
+<!-- ====== FORM PENDAFTARAN PASIEN ====== -->
+<div id="pendaftaranPage" class="card hidden">
+<h3>Pendaftaran Pasien</h3>
 
-<div id="hasilRiwayat"></div>
-</div>
-
-<!-- OBAT & PEMBAYARAN -->
-<div id="obatPage" class="card hidden">
-<h3>Obat & Pembayaran</h3>
-<input id="rmBayar" placeholder="No RM">
-<button onclick="loadPasienBayar()">CARI PASIEN</button>
-
-<hr>
-<b id="infoBayar"></b>
-
-<input id="namaObat" placeholder="Nama Obat">
-<input id="hargaObat" type="number" placeholder="Harga">
-<button onclick="tambahObat()">TAMBAH OBAT</button>
-
-<table>
-<thead><tr><th>Obat</th><th>Harga</th></tr></thead>
-<tbody id="listObat"></tbody>
-</table>
-
-<div class="total">TOTAL: Rp <span id="totalBayar">0</span></div>
-
-<select id="statusBayar">
-<option>LUNAS</option>
-<option>BELUM LUNAS</option>
+<input id="nama" placeholder="Nama Pasien">
+<input id="nik" placeholder="NIK">
+<input id="tgl" type="date">
+<select id="jk">
+  <option value="">Jenis Kelamin</option>
+  <option>Laki-laki</option>
+  <option>Perempuan</option>
 </select>
+<textarea id="alamat" placeholder="Alamat"></textarea>
+<input id="hp" placeholder="No HP">
 
-<button onclick="simpanPembayaran()">SIMPAN PEMBAYARAN</button>
+<button onclick="simpanPasien()">SIMPAN PASIEN</button>
 </div>
 
 <div class="card">
@@ -99,247 +85,92 @@ Role: <b id="userRole"></b>
 </div>
 
 </div>
+
 </div>
 
 <script>
-/* USER */
-const USERS={
-"H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
-"Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
-"User2":{pin:"Username2",role:"Obat & Pembayaran"}
+/* ================= USER ================= */
+const USERS = {
+  "H.dudi_ruhendra": { pin:"Qwerty1234", role:"Dokter (Admin)" },
+  "Username1": { pin:"User1", role:"Pendaftaran & Anamnesa" },
+  "User2": { pin:"Username2", role:"Obat & Pembayaran" }
 };
 
-/* FIREBASE */
-firebase.initializeApp({
-databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
-});
-const db=firebase.database();
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-/* LOGIN */
+/* ================= LOGIN ================= */
 function login(){
-if(USERS[username.value] && USERS[username.value].pin===pin.value){
-localStorage.setItem("emr_user",username.value);
-showDashboard();
-}else alert("Username / PIN salah");
+  const u=username.value.trim();
+  const p=pin.value.trim();
+  if(USERS[u] && USERS[u].pin===p){
+    localStorage.setItem("emr_user",u);
+    showDashboard();
+  }else alert("Username / PIN salah");
 }
 
-/* DASHBOARD */
+/* ================= DASHBOARD ================= */
 function showDashboard(){
-const u=localStorage.getItem("emr_user");
-loginPage.classList.add("hidden");
-dashboardPage.classList.remove("hidden");
-userName.innerText=u;
-userRole.innerText=USERS[u].role;
+  const u=localStorage.getItem("emr_user");
+  if(!u) return;
+  loginPage.classList.add("hidden");
+  dashboardPage.classList.remove("hidden");
+  userName.innerText=u;
+  userRole.innerText=USERS[u].role;
 
-menu.innerHTML=`
-<div class="card" onclick="openRiwayat()">Riwayat Pasien</div>
-<div class="card" onclick="openObat()">Obat & Pembayaran</div>`;
+  let html="";
+  if(USERS[u].role.includes("Pendaftaran")){
+    html+=`<div class="card" onclick="openPendaftaran()"><b>Pendaftaran Pasien</b></div>`;
+  }
+  if(USERS[u].role.includes("Dokter")){
+    html+=`<div class="card"><b>SOAP Dokter</b></div>`;
+  }
+  if(USERS[u].role.includes("Obat")){
+    html+=`<div class="card"><b>Pembayaran</b></div>`;
+  }
+  menu.innerHTML=html;
 }
 
-/* RIWAYAT */
-function openRiwayat(){
-hideAll();riwayatPage.classList.remove("hidden");
-hasilRiwayat.innerHTML="";
+/* ================= PENDAFTARAN ================= */
+function openPendaftaran(){
+  pendaftaranPage.classList.remove("hidden");
 }
 
-function loadRiwayat(){
-const rm=rmCari.value;
-hasilRiwayat.innerHTML="Loading...";
-let html="";
+function simpanPasien(){
+  if(!nama.value || !nik.value){
+    alert("Nama & NIK wajib diisi");
+    return;
+  }
 
-db.ref("pasien/"+rm).once("value",p=>{
-if(!p.exists()){hasilRiwayat.innerHTML="Pasien tidak ditemukan";return;}
-html+=`<b>Nama:</b> ${p.val().nama}<hr>`;
-});
+  const rm = "RM"+Date.now();
 
-db.ref("anamnesa/"+rm).once("value",a=>{
-if(a.exists()){
-html+="<h4>Anamnesa</h4>";
-a.forEach(x=>html+=`• ${x.val().keluhan}<br>`);
-}
-});
-
-db.ref("soap/"+rm).once("value",s=>{
-if(s.exists()){
-html+="<h4>SOAP</h4>";
-s.forEach(x=>{
-html+=`
-<b>Tanggal:</b> ${x.key}<br>
-S:${x.val().s}<br>
-O:${x.val().o}<br>
-A:${x.val().a}<br>
-P:${x.val().p}<hr>`;
-});
-}
-});
-
-db.ref("pembayaran/"+rm).once("value",b=>{
-if(b.exists()){
-html+="<h4>Pembayaran</h4>";
-b.forEach(x=>{
-html+=`<b>${x.key}</b> | Rp ${x.val().total} (${x.val().status})<br>`;
-});
-}
-setTimeout(()=>hasilRiwayat.innerHTML=html,500);
-});
-}
-
-/* OBAT */
-let keranjang=[],total=0;
-function openObat(){hideAll();obatPage.classList.remove("hidden");}
-function loadPasienBayar(){
-db.ref("pasien/"+rmBayar.value).once("value",s=>{
-infoBayar.innerText=s.exists()?"Pasien: "+s.val().nama:"Tidak ditemukan";
-});
-}
-function tambahObat(){
-keranjang.push({nama:namaObat.value,harga:Number(hargaObat.value)});
-renderObat();namaObat.value=hargaObat.value="";
-}
-function renderObat(){
-total=0;listObat.innerHTML="";
-keranjang.forEach(o=>{listObat.innerHTML+=`<tr><td>${o.nama}</td><td>${o.harga}</td></tr>`;total+=o.harga});
-totalBayar.innerText=total;
-}
-function simpanPembayaran(){
-db.ref("pembayaran/"+rmBayar.value+"/"+Date.now()).set({
-obat:keranjang,total,status:statusBayar.value,petugas:localStorage.getItem("emr_user")
-});
-alert("Pembayaran disimpan");keranjang=[];renderObat();
-}
-
-/* UTIL */
-function hideAll(){riwayatPage.classList.add("hidden");obatPage.classList.add("hidden");}
-function logout(){localStorage.clear();location.reload();}
-if(localStorage.getItem("emr_user"))showDashboard();
-</script>
-<script>
-function printTagihan(){
-  if(!rmBayar.value){ alert("Masukkan No RM"); return; }
-
-  let w = window.open('', '', 'width=800,height=650');
-  let html = `
-  <html><head>
-  <title>Tagihan Pembayaran</title>
-  <style>
-    body{font-family:Arial;padding:20px}
-    h2,h3{text-align:center}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border:1px solid #000;padding:8px}
-    .right{text-align:right}
-  </style>
-  </head><body>
-
-  <h2>TAGIHAN PEMBAYARAN PASIEN</h2>
-  <h3>Klinik dr. H. DUDI RUHENDERA</h3>
-  <hr>
-  <b>No RM:</b> ${rmBayar.value}<br>
-  <b>Pasien:</b> ${infoBayar.innerText.replace("Pasien: ","")}<br>
-  <b>Tanggal:</b> ${new Date().toLocaleString()}
-  <hr>
-
-  <table>
-  <tr><th>Obat / Tindakan</th><th>Harga</th></tr>`;
-
-  keranjang.forEach(o=>{
-    html+=`<tr><td>${o.nama}</td><td class="right">Rp ${o.harga}</td></tr>`;
+  db.ref("pasien/"+rm).set({
+    nama: nama.value,
+    nik: nik.value,
+    tgl_lahir: tgl.value,
+    jk: jk.value,
+    alamat: alamat.value,
+    hp: hp.value,
+    created: new Date().toISOString()
   });
 
-  html+=`
-  <tr>
-    <th class="right">TOTAL</th>
-    <th class="right">Rp ${total}</th>
-  </tr>
-  </table>
-
-  <br>
-  <b>Status:</b> ${statusBayar.value}<br>
-  <b>Petugas:</b> ${localStorage.getItem("emr_user")}
-
-  </body></html>`;
-
-  w.document.write(html);
-  w.document.close();
-  w.print();
+  alert("Pasien berhasil disimpan\nNo RM: "+rm);
+  nama.value=nik.value=tgl.value=alamat.value=hp.value="";
+  jk.value="";
 }
-</script>
-<script>
-function printERM(){
-  if(!rmCari.value){ alert("Masukkan No RM"); return; }
 
-  let w = window.open('', '', 'width=900,height=700');
-  let html = `
-  <html><head>
-  <title>ERM Pasien</title>
-  <style>
-    body{font-family:Arial;padding:20px}
-    h2,h3{text-align:center}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #000;padding:6px;font-size:12px}
-  </style>
-  </head><body>
-
-  <h2>REKAM MEDIS ELEKTRONIK</h2>
-  <h3>Klinik dr. H. DUDI RUHENDERA</h3>
-  <hr>
-  `;
-
-  db.ref("pasien/"+rmCari.value).once("value",p=>{
-    if(p.exists()){
-      html+=`
-      <b>No RM:</b> ${rmCari.value}<br>
-      <b>Nama:</b> ${p.val().nama}<br>
-      <b>Alamat:</b> ${p.val().alamat || "-"}<br><hr>`;
-    }
-  });
-
-  db.ref("anamnesa/"+rmCari.value).once("value",a=>{
-    if(a.exists()){
-      html+="<h4>Anamnesa</h4><ul>";
-      a.forEach(x=>html+=`<li>${x.val().keluhan}</li>`);
-      html+="</ul><hr>";
-    }
-  });
-
-  db.ref("soap/"+rmCari.value).once("value",s=>{
-    if(s.exists()){
-      html+="<h4>SOAP</h4>";
-      s.forEach(x=>{
-        html+=`
-        <b>Tanggal:</b> ${x.key}<br>
-        S: ${x.val().s}<br>
-        O: ${x.val().o}<br>
-        A: ${x.val().a}<br>
-        P: ${x.val().p}<hr>`;
-      });
-    }
-  });
-
-  db.ref("pembayaran/"+rmCari.value).once("value",b=>{
-    if(b.exists()){
-      html+="<h4>Pembayaran</h4><table><tr><th>Tanggal</th><th>Total</th><th>Status</th></tr>";
-      b.forEach(x=>{
-        html+=`
-        <tr>
-          <td>${new Date(Number(x.key)).toLocaleDateString()}</td>
-          <td>Rp ${x.val().total}</td>
-          <td>${x.val().status}</td>
-        </tr>`;
-      });
-      html+="</table>";
-    }
-
-    html+=`
-    <br><br>
-    <b>Dicetak oleh:</b> ${localStorage.getItem("emr_user")}<br>
-    <b>Tanggal Cetak:</b> ${new Date().toLocaleString()}
-    </body></html>`;
-
-    w.document.write(html);
-    w.document.close();
-    w.print();
-  });
+/* ================= LOGOUT ================= */
+function logout(){
+  localStorage.clear();
+  location.reload();
 }
+
+/* ================= AUTO LOGIN ================= */
+if(localStorage.getItem("emr_user")) showDashboard();
 </script>
 
 </body>
