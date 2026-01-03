@@ -17,6 +17,7 @@ header{background:var(--p);color:#fff;padding:16px;text-align:center}
 .container{padding:20px;max-width:1100px;margin:auto}
 .card{background:#fff;padding:20px;border-radius:14px;margin-bottom:15px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
 input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ccc}
+textarea{min-height:70px}
 button{background:var(--p);color:#fff;border:none;font-weight:bold;cursor:pointer}
 button.danger{background:var(--d)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
@@ -29,14 +30,14 @@ hr{border:none;border-top:1px solid #eee;margin:15px 0}
 
 <!-- LOGIN -->
 <div id="loginPage">
-<div class="container">
-<div class="card">
-<h2 align="center">LOGIN EMR</h2>
-<input id="username" placeholder="Username">
-<input id="pin" type="password" placeholder="PIN">
-<button onclick="login()">MASUK</button>
-</div>
-</div>
+  <div class="container">
+    <div class="card">
+      <h2 align="center">LOGIN EMR</h2>
+      <input id="username" placeholder="Username">
+      <input id="pin" type="password" placeholder="PIN">
+      <button onclick="login()">MASUK</button>
+    </div>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -55,9 +56,11 @@ Login: <b id="userName"></b><br>
 
 <div id="menu" class="grid"></div>
 
-<!-- PENDAFTARAN -->
-<div id="pendaftaranPage" class="card hidden">
-<h3>Pendaftaran Pasien</h3>
+<!-- PENDAFTARAN & ANAMNESA -->
+<div id="pendaftaranAnamnesaPage" class="card hidden">
+<h3>Pendaftaran & Anamnesa Pasien</h3>
+
+<h4>🧾 Data Pasien</h4>
 <input id="nama" placeholder="Nama Pasien">
 <input id="nik" placeholder="NIK">
 <input id="tgl" type="date">
@@ -68,19 +71,12 @@ Login: <b id="userName"></b><br>
 </select>
 <textarea id="alamat" placeholder="Alamat"></textarea>
 <input id="hp" placeholder="No HP">
-<button onclick="simpanPasien()">SIMPAN PASIEN</button>
-</div>
-
-<!-- ANAMNESA -->
-<div id="anamnesaPage" class="card hidden">
-<h3>Anamnesa Perawat</h3>
-
-<input id="rmCari" placeholder="No RM (contoh: RM...)">
-<button onclick="loadPasien()">CARI PASIEN</button>
 
 <hr>
 
-<b id="infoPasien"></b>
+<h4>🩺 Anamnesa Perawat</h4>
+<small>No RM otomatis setelah simpan</small><br>
+<b id="rmInfo"></b>
 
 <textarea id="keluhan" placeholder="Keluhan Utama"></textarea>
 <input id="td" placeholder="Tekanan Darah (mmHg)">
@@ -89,7 +85,9 @@ Login: <b id="userName"></b><br>
 <input id="rr" placeholder="RR (/menit)">
 <textarea id="catatan" placeholder="Catatan Perawat"></textarea>
 
-<button onclick="simpanAnamnesa()">SIMPAN ANAMNESA</button>
+<button onclick="simpanPendaftaranAnamnesa()">
+SIMPAN PASIEN & ANAMNESA
+</button>
 </div>
 
 <div class="card">
@@ -102,86 +100,86 @@ Login: <b id="userName"></b><br>
 <script>
 /* USER */
 const USERS={
-"H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
-"Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
-"User2":{pin:"Username2",role:"Obat & Pembayaran"}
+  "H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter (Admin)"},
+  "Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
+  "User2":{pin:"Username2",role:"Obat & Pembayaran"}
 };
 
 /* FIREBASE */
 firebase.initializeApp({
-databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
 const db=firebase.database();
 
 /* LOGIN */
 function login(){
-if(USERS[username.value] && USERS[username.value].pin===pin.value){
-localStorage.setItem("emr_user",username.value);
-showDashboard();
-}else alert("Username / PIN salah");
+  if(USERS[username.value] && USERS[username.value].pin===pin.value){
+    localStorage.setItem("emr_user",username.value);
+    showDashboard();
+  } else alert("Username / PIN salah");
 }
 
 /* DASHBOARD */
 function showDashboard(){
-const u=localStorage.getItem("emr_user");
-loginPage.classList.add("hidden");
-dashboardPage.classList.remove("hidden");
-userName.innerText=u;
-userRole.innerText=USERS[u].role;
+  const u=localStorage.getItem("emr_user");
+  loginPage.classList.add("hidden");
+  dashboardPage.classList.remove("hidden");
+  userName.innerText=u;
+  userRole.innerText=USERS[u].role;
 
-let m="";
-if(USERS[u].role.includes("Pendaftaran"))
-m+=`<div class="card" onclick="openPendaftaran()">Pendaftaran Pasien</div>
-<div class="card" onclick="openAnamnesa()">Anamnesa Perawat</div>`;
-if(USERS[u].role.includes("Dokter"))
-m+=`<div class="card">SOAP Dokter</div>`;
-if(USERS[u].role.includes("Obat"))
-m+=`<div class="card">Pembayaran</div>`;
-menu.innerHTML=m;
+  let m="";
+  if(USERS[u].role.includes("Pendaftaran")){
+    m+=`<div class="card" onclick="openPendaftaranAnamnesa()">Pendaftaran & Anamnesa</div>`;
+  }
+  menu.innerHTML=m;
 }
 
-/* PENDAFTARAN */
-function openPendaftaran(){
-hideAll();pendaftaranPage.classList.remove("hidden");
-}
-function simpanPasien(){
-const rm="RM"+Date.now();
-db.ref("pasien/"+rm).set({
-nama:nama.value,nik:nik.value,tgl:tgl.value,
-jk:jk.value,alamat:alamat.value,hp:hp.value,
-created:new Date().toISOString()
-});
-alert("Pasien disimpan\nNo RM: "+rm);
+/* PENDAFTARAN + ANAMNESA */
+let currentRM="";
+
+function openPendaftaranAnamnesa(){
+  hideAll();
+  pendaftaranAnamnesaPage.classList.remove("hidden");
 }
 
-/* ANAMNESA */
-function openAnamnesa(){
-hideAll();anamnesaPage.classList.remove("hidden");
-}
-function loadPasien(){
-db.ref("pasien/"+rmCari.value).once("value",s=>{
-if(s.exists()){
-infoPasien.innerText="Pasien: "+s.val().nama;
-}else alert("Pasien tidak ditemukan");
-});
-}
-function simpanAnamnesa(){
-const t=new Date().toISOString();
-db.ref("anamnesa/"+rmCari.value+"/"+t).set({
-keluhan:keluhan.value,td:td.value,nadi:nadi.value,
-suhu:suhu.value,rr:rr.value,catatan:catatan.value,
-petugas:localStorage.getItem("emr_user")
-});
-alert("Anamnesa tersimpan");
+function simpanPendaftaranAnamnesa(){
+  if(!nama.value){ alert("Nama pasien wajib diisi"); return; }
+
+  currentRM="RM"+Date.now();
+
+  db.ref("pasien/"+currentRM).set({
+    nama:nama.value,
+    nik:nik.value,
+    tgl:tgl.value,
+    jk:jk.value,
+    alamat:alamat.value,
+    hp:hp.value,
+    created:new Date().toISOString()
+  });
+
+  db.ref("anamnesa/"+currentRM+"/"+new Date().toISOString()).set({
+    keluhan:keluhan.value,
+    td:td.value,
+    nadi:nadi.value,
+    suhu:suhu.value,
+    rr:rr.value,
+    catatan:catatan.value,
+    petugas:localStorage.getItem("emr_user")
+  });
+
+  rmInfo.innerHTML="<br><b>No RM: "+currentRM+"</b>";
+  alert("Pendaftaran & Anamnesa berhasil disimpan");
 }
 
 /* UTIL */
 function hideAll(){
-pendaftaranPage.classList.add("hidden");
-anamnesaPage.classList.add("hidden");
+  pendaftaranAnamnesaPage.classList.add("hidden");
 }
-function logout(){localStorage.clear();location.reload();}
-if(localStorage.getItem("emr_user"))showDashboard();
+function logout(){
+  localStorage.clear();
+  location.reload();
+}
+if(localStorage.getItem("emr_user")) showDashboard();
 </script>
 
 </body>
