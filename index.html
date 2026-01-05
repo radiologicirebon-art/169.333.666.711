@@ -1,239 +1,222 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EMR Klinik dr. H. DUDI RUHENDERA</title>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMR Klinik Pratama</title>
 
 <style>
-:root{
-  --primary:#0b5ed7;
-  --danger:#dc3545;
-  --bg:#f4f6f8;
-  --card:#ffffff;
-  --text:#212529;
+:root{--p:#1976d2;--bg:#f4f8ff}
+body{margin:0;font-family:Arial;background:var(--bg)}
+header{background:var(--p);color:#fff;padding:15px;display:flex;justify-content:space-between}
+button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer}
+input,select,textarea{width:100%;padding:8px;margin:5px 0}
+.menu button{margin:4px;background:#e3f2fd}
+.box{background:#fff;padding:20px;border-radius:10px;margin-top:15px;max-width:750px}
+.login{display:flex;justify-content:center;align-items:center;height:100vh}
+.card{background:#fff;padding:30px;width:320px;border-radius:10px}
+.print{display:none}
+li{margin-bottom:6px}
+.tv{font-size:36px;text-align:center}
+@media print{
+ body *{visibility:hidden}
+ .print,.print *{visibility:visible}
+ .print{position:absolute;top:0;left:0;width:100%}
 }
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text)}
-.hidden{display:none}
-header{background:var(--primary);color:#fff;padding:18px;text-align:center}
-.container{max-width:1400px;margin:auto;padding:20px}
-.card{background:var(--card);padding:20px;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
-input,select,textarea,button{width:100%;padding:12px;margin-top:8px;border-radius:10px;border:1px solid #ced4da;font-size:14px}
-button{background:var(--primary);color:#fff;border:none;font-weight:600;cursor:pointer}
-button.secondary{background:#6c757d}
-button.danger{background:var(--danger)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.menu-card{text-align:center;padding:30px 20px;cursor:pointer;font-weight:600}
-.menu-card:hover{background:#f1f5ff}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
-th,td{border:1px solid #dee2e6;padding:8px}
-th{background:#f8f9fa}
-.total{font-size:18px;font-weight:bold;text-align:right;margin-top:10px}
-.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;background:#e9ecef}
-.footer-note{font-size:11px;color:#666;text-align:center;margin-top:20px}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage">
-  <div class="container">
-    <div class="card" style="max-width:420px;margin:auto">
-      <h2 style="text-align:center">LOGIN EMR</h2>
-      <input id="username" placeholder="Username">
-      <input id="pin" type="password" placeholder="PIN">
-      <button onclick="login()">MASUK</button>
-    </div>
+<div id="tvPage" style="display:none;padding:20px">
+  <h1 class="tv">ANTRIAN PASIEN</h1>
+  <div id="tvPasien"></div>
+  <h1 class="tv">ANTRIAN FARMASI</h1>
+  <div id="tvObat"></div>
+</div>
+
+<div id="loginPage" class="login">
+  <div class="card">
+    <h3>EMR Klinik Pratama</h3>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password">
+    <button onclick="login()">LOGIN</button>
+    <p id="error" style="color:red"></p>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="hidden">
+<div id="dashboardPage" style="display:none">
 <header>
-  <b>Sistem Informasi EMR</b><br>
-  Klinik dr. H. DUDI RUHENDERA
+  <b>Dashboard EMR Klinik</b>
+  <button onclick="logout()">Logout</button>
 </header>
 
-<div class="container">
-
-<div class="card">
-  Login: <b id="userName"></b><br>
-  Role: <span class="badge" id="userRole"></span>
+<div style="padding:20px">
+<div class="menu" id="menu">
+  <button data-role="ADMIN,PERAWAT" onclick="show('pasien')">Pasien</button>
+  <button data-role="ADMIN,PERAWAT" onclick="show('kunjungan')">Pendaftaran</button>
+  <button data-role="ADMIN,DOKTER" onclick="show('periksa')">Pemeriksaan</button>
+  <button data-role="ADMIN,PERAWAT" onclick="show('antrian')">Antrian Pasien</button>
+  <button data-role="ADMIN,FARMASI" onclick="show('obat')">Antrian Obat</button>
+  <button data-role="ADMIN,FARMASI" onclick="show('resep')">Resep</button>
+  <button data-role="ADMIN" onclick="show('laporan')">Laporan</button>
 </div>
 
-<div id="menu" class="grid"></div>
-
-<!-- PASIEN BARU -->
-<div id="pasienPage" class="card hidden">
-  <h3>Daftar Pasien Baru</h3>
-  <div class="grid">
-    <input id="p_rm" readonly placeholder="Nomor RM (Otomatis)">
-    <input id="p_nama" placeholder="Nama Pasien">
-    <input id="p_nik" placeholder="NIK">
-    <select id="p_jk">
-      <option value="">Jenis Kelamin</option>
-      <option value="L">Laki-laki</option>
-      <option value="P">Perempuan</option>
-    </select>
-  </div>
-  <button onclick="simpanPasien()">Simpan Pasien</button>
-  <div id="pasienInfo"></div>
+<div id="pasien" class="box" style="display:none">
+  <input id="nama" placeholder="Nama Pasien">
+  <button onclick="simpanPasien()">Simpan</button>
 </div>
 
-<!-- ANAMNESA -->
-<div id="anamnesaPage" class="card hidden">
-  <h3>Anamnesa Pasien</h3>
-  <div class="grid">
-    <input id="a_rm" placeholder="Nomor RM">
-    <textarea id="a_keluhan" placeholder="Keluhan utama pasien"></textarea>
-  </div>
-  <button onclick="simpanAnamnesa()">Simpan Anamnesa</button>
-  <div id="anamnesaInfo"></div>
+<div id="kunjungan" class="box" style="display:none">
+  <select id="pasienSelect"></select>
+  <button onclick="simpanKunjungan()">Daftar</button>
 </div>
 
-<!-- RIWAYAT -->
-<div id="riwayatPage" class="card hidden">
-  <h3>Riwayat Pasien</h3>
-  <div class="grid">
-    <input id="rmCari" placeholder="Nomor Rekam Medis">
-    <button onclick="loadRiwayat()">Cari</button>
-  </div>
-  <div id="hasilRiwayat"></div>
+<div id="periksa" class="box" style="display:none">
+  <select id="kunjunganSelect"></select>
+  <textarea id="s" placeholder="Subjektif"></textarea>
+  <textarea id="a" placeholder="Assessment"></textarea>
+  <button onclick="simpanPemeriksaan()">Simpan</button>
 </div>
 
-<!-- OBAT -->
-<div id="obatPage" class="card hidden">
-  <h3>Obat & Pembayaran</h3>
-  <input id="rmBayar" placeholder="Nomor RM">
+<div id="antrian" class="box" style="display:none">
+  <ul id="listAntrian"></ul>
 </div>
 
-<!-- BPJS -->
-<div id="bpjsPage" class="card hidden">
-  <h3>Registrasi BPJS</h3>
-  <input id="bpjs_rm" placeholder="Nomor RM">
+<div id="obat" class="box" style="display:none">
+  <ul id="listObat"></ul>
 </div>
 
-<div class="card">
-  <button class="danger" onclick="logout()">Logout</button>
+<div id="resep" class="box" style="display:none">
+  <select id="kunjunganResep"></select>
+  <input id="obatNama">
+  <input id="aturan">
+  <button onclick="simpanResep()">Simpan</button>
 </div>
 
-<div class="footer-note">
-  © EMR Klinik dr. H. DUDI RUHENDERA – Data bersifat rahasia
+<div id="laporan" class="box" style="display:none">
+  <ul id="listLaporan"></ul>
 </div>
-
 </div>
 </div>
 
-<script>
-/* USERS */
-const USERS={
-  "H.dudi_ruhendra":{pin:"Qwerty1234",role:"Dokter / Admin"},
-  "Username1":{pin:"User1",role:"Pendaftaran & Anamnesa"},
-  "User2":{pin:"Username2",role:"Obat & Pembayaran"}
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,signOut}
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {getDatabase,ref,set,update,onValue,get}
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const app=initializeApp({
+ apiKey:"API_KEY",
+ authDomain:"PROJECT.firebaseapp.com",
+ databaseURL:"https://PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId:"PROJECT"
+});
+const auth=getAuth(app);
+const db=getDatabase(app);
+
+const speak=text=>{
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="id-ID";
+ speechSynthesis.speak(u);
 };
 
-/* FIREBASE */
-firebase.initializeApp({
-  databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
-});
-const db=firebase.database();
-
-/* LOGIN */
-function login(){
-  const u=username.value.trim();
-  const p=pin.value.trim();
-  if(USERS[u] && USERS[u].pin===p){
-    localStorage.setItem("emr_user",u);
-    showDashboard();
-  }else alert("Login salah");
+function isTV(){
+ return new URLSearchParams(window.location.search).get("mode")==="tv";
 }
 
-/* DASHBOARD */
-function showDashboard(){
-  const u=localStorage.getItem("emr_user");
-  if(!u) return;
-  loginPage.classList.add("hidden");
-  dashboardPage.classList.remove("hidden");
-  userName.innerText=u;
-  userRole.innerText=USERS[u].role;
-
-  let html="";
-  if(USERS[u].role==="Pendaftaran & Anamnesa"){
-    html+=`
-      <div class="card menu-card" onclick="openPasien()">🧾 Daftar Pasien Baru</div>
-      <div class="card menu-card" onclick="openAnamnesa()">🩺 Anamnesa Pasien</div>`;
-  }
-  html+=`
-    <div class="card menu-card" onclick="openRiwayat()">📁 Riwayat Pasien</div>
-    <div class="card menu-card" onclick="openBPJS()">🩺 BPJS</div>`;
-  if(USERS[u].role==="Obat & Pembayaran"){
-    html+=`<div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>`;
-  }
-  if(USERS[u].role==="Dokter / Admin"){
-    html+=`
-      <div class="card menu-card" onclick="openPasien()">🧾 Daftar Pasien Baru</div>
-      <div class="card menu-card" onclick="openAnamnesa()">🩺 Anamnesa Pasien</div>
-      <div class="card menu-card" onclick="openObat()">💊 Obat & Pembayaran</div>`;
-  }
-  menu.innerHTML=html;
-}
-
-/* UTIL */
-function hideAll(){
-  pasienPage.classList.add("hidden");
-  anamnesaPage.classList.add("hidden");
-  riwayatPage.classList.add("hidden");
-  obatPage.classList.add("hidden");
-  bpjsPage.classList.add("hidden");
-}
-function openPasien(){hideAll();pasienPage.classList.remove("hidden");generateRM()}
-function openAnamnesa(){hideAll();anamnesaPage.classList.remove("hidden")}
-function openRiwayat(){hideAll();riwayatPage.classList.remove("hidden")}
-function openObat(){hideAll();obatPage.classList.remove("hidden")}
-function openBPJS(){hideAll();bpjsPage.classList.remove("hidden")}
-
-/* RM AUTO */
-function generateRM(){
-  const d=new Date();
-  p_rm.value="RM"+d.getFullYear().toString().slice(2)+(d.getMonth()+1).toString().padStart(2,"0")+d.getTime().toString().slice(-4);
-}
-
-/* SAVE */
-function simpanPasien(){
-  if(!p_nama.value) return alert("Nama pasien wajib");
-  db.ref("pasien/"+p_rm.value).set({
-    rm:p_rm.value,nama:p_nama.value,nik:p_nik.value,jk:p_jk.value,
-    petugas:localStorage.getItem("emr_user"),waktu:new Date().toISOString()
+if(isTV()){
+ tvPage.style.display="block";
+ loginPage.style.display="none";
+ onValue(ref(db,"kunjungan"),s=>{
+  tvPasien.innerHTML="";tvObat.innerHTML="";
+  s.forEach(d=>{
+   if(d.val().status==="DIPANGGIL_DOKTER")
+    tvPasien.innerHTML+=`<div class="tv">${d.key}</div>`;
+   if(d.val().status==="KE FARMASI")
+    tvObat.innerHTML+=`<div class="tv">${d.key}</div>`;
   });
-  pasienInfo.innerHTML="<b>Pasien tersimpan</b>";
-  p_nama.value=p_nik.value="";
-  generateRM();
-}
+ });
+}else{
+ window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value)
+ .then(()=>{loginPage.style.display="none";dashboardPage.style.display="block"});
+ window.logout=()=>signOut(auth).then(()=>location.reload());
 
-function simpanAnamnesa(){
-  if(!a_rm.value||!a_keluhan.value) return alert("Lengkapi anamnesa");
-  db.ref("anamnesa/"+a_rm.value+"/"+Date.now()).set({
-    keluhan:a_keluhan.value,
-    petugas:localStorage.getItem("emr_user"),
-    waktu:new Date().toISOString()
+ window.simpanPasien=()=>{
+  const rm="RM"+Date.now();
+  set(ref(db,"pasien/"+rm),{nama:nama.value});
+ };
+
+ function loadPasien(){
+  onValue(ref(db,"pasien"),s=>{
+   pasienSelect.innerHTML="";
+   s.forEach(d=>pasienSelect.innerHTML+=`<option value="${d.key}">${d.val().nama}</option>`);
   });
-  anamnesaInfo.innerHTML="<b>Anamnesa tersimpan</b>";
-  a_keluhan.value="";
-}
+ }
 
-function logout(){localStorage.clear();location.reload()}
-if(localStorage.getItem("emr_user")) showDashboard();
+ window.simpanKunjungan=()=>{
+  const id="A"+Date.now();
+  set(ref(db,"kunjungan/"+id),{rm:pasienSelect.value,status:"MENUNGGU"});
+ };
+
+ function loadKunjungan(){
+  onValue(ref(db,"kunjungan"),s=>{
+   kunjunganSelect.innerHTML="";
+   kunjunganResep.innerHTML="";
+   s.forEach(d=>{
+    kunjunganSelect.innerHTML+=`<option>${d.key}</option>`;
+    kunjunganResep.innerHTML+=`<option>${d.key}</option>`;
+   });
+  });
+ }
+
+ window.simpanPemeriksaan=()=>{
+  update(ref(db,"kunjungan/"+kunjunganSelect.value),
+   {status:"KE FARMASI"});
+  speak(`Nomor antrian ${kunjunganSelect.value}, silakan ke farmasi`);
+ };
+
+ function loadAntrian(){
+  onValue(ref(db,"kunjungan"),s=>{
+   listAntrian.innerHTML="";
+   s.forEach(d=>{
+    if(d.val().status==="MENUNGGU")
+     listAntrian.innerHTML+=`<li>${d.key}
+     <button onclick="panggil('${d.key}')">Panggil</button></li>`;
+   });
+  });
+ }
+
+ window.panggil=id=>{
+  update(ref(db,"kunjungan/"+id),{status:"DIPANGGIL_DOKTER"});
+  speak(`Nomor antrian ${id}, silakan menuju ruang dokter`);
+ };
+
+ function loadObat(){
+  onValue(ref(db,"kunjungan"),s=>{
+   listObat.innerHTML="";
+   s.forEach(d=>{
+    if(d.val().status==="KE FARMASI")
+     listObat.innerHTML+=`<li>${d.key}
+     <button onclick="selesai('${d.key}')">Selesai</button></li>`;
+   });
+  });
+ }
+
+ window.selesai=id=>update(ref(db,"kunjungan/"+id),{status:"SELESAI"});
+
+ window.show=id=>{
+  ["pasien","kunjungan","periksa","antrian","obat","resep","laporan"]
+  .forEach(x=>document.getElementById(x).style.display="none");
+  document.getElementById(id).style.display="block";
+  if(id==="kunjungan")loadPasien();
+  if(id==="periksa"||id==="resep")loadKunjungan();
+  if(id==="antrian")loadAntrian();
+  if(id==="obat")loadObat();
+ };
+}
 </script>
-
 </body>
 </html>
