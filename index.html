@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -16,19 +15,13 @@ input,select,textarea{width:100%;padding:8px;margin:5px 0}
 .box{background:#fff;padding:20px;border-radius:10px;margin-top:15px;max-width:750px}
 .login{display:flex;justify-content:center;align-items:center;height:100vh}
 .card{background:#fff;padding:30px;width:320px;border-radius:10px}
-.print{display:none}
-li{margin-bottom:6px}
 .tv{font-size:36px;text-align:center}
-@media print{
- body *{visibility:hidden}
- .print,.print *{visibility:visible}
- .print{position:absolute;top:0;left:0;width:100%}
-}
 </style>
 </head>
 
 <body>
 
+<!-- TV MODE -->
 <div id="tvPage" style="display:none;padding:20px">
   <h1 class="tv">ANTRIAN PASIEN</h1>
   <div id="tvPasien"></div>
@@ -36,16 +29,18 @@ li{margin-bottom:6px}
   <div id="tvObat"></div>
 </div>
 
+<!-- LOGIN -->
 <div id="loginPage" class="login">
   <div class="card">
     <h3>EMR Klinik Pratama</h3>
     <input id="email" placeholder="Email">
-    <input id="password" type="password">
+    <input id="password" type="password" placeholder="Password">
     <button onclick="login()">LOGIN</button>
     <p id="error" style="color:red"></p>
   </div>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboardPage" style="display:none">
 <header>
   <b>Dashboard EMR Klinik</b>
@@ -53,7 +48,7 @@ li{margin-bottom:6px}
 </header>
 
 <div style="padding:20px">
-<div class="menu" id="menu">
+<div class="menu">
   <button data-role="ADMIN,PERAWAT" onclick="show('pasien')">Pasien</button>
   <button data-role="ADMIN,PERAWAT" onclick="show('kunjungan')">Pendaftaran</button>
   <button data-role="ADMIN,DOKTER" onclick="show('periksa')">Pemeriksaan</button>
@@ -77,6 +72,8 @@ li{margin-bottom:6px}
   <select id="kunjunganSelect"></select>
   <textarea id="s" placeholder="Subjektif"></textarea>
   <textarea id="a" placeholder="Assessment"></textarea>
+  <canvas id="ttd" width="300" height="120" style="border:1px solid #ccc"></canvas>
+  <button onclick="clearTTD()">Hapus TTD</button>
   <button onclick="simpanPemeriksaan()">Simpan</button>
 </div>
 
@@ -90,8 +87,8 @@ li{margin-bottom:6px}
 
 <div id="resep" class="box" style="display:none">
   <select id="kunjunganResep"></select>
-  <input id="obatNama">
-  <input id="aturan">
+  <input id="obatNama" placeholder="Nama Obat">
+  <input id="aturan" placeholder="Aturan Pakai">
   <button onclick="simpanResep()">Simpan</button>
 </div>
 
@@ -103,33 +100,32 @@ li{margin-bottom:6px}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,signOut}
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}
 from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {getDatabase,ref,set,update,onValue,get}
 from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-const app=initializeApp({
- apiKey:"API_KEY",
- authDomain:"PROJECT.firebaseapp.com",
- databaseURL:"https://PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
- projectId:"PROJECT"
+/* 🔴 GANTI apiKey SAJA */
+const app = initializeApp({
+  apiKey: "ISI_API_KEY_KAMU",
+  authDomain: "develop-program-erm.firebaseapp.com",
+  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "develop-program-erm"
 });
+
 const auth=getAuth(app);
 const db=getDatabase(app);
+let CURRENT_ROLE=null;
 
-const speak=text=>{
- const u=new SpeechSynthesisUtterance(text);
- u.lang="id-ID";
- speechSynthesis.speak(u);
+const speak=t=>{
+ const u=new SpeechSynthesisUtterance(t);
+ u.lang="id-ID";speechSynthesis.speak(u);
 };
 
-function isTV(){
- return new URLSearchParams(window.location.search).get("mode")==="tv";
-}
+const isTV=()=>new URLSearchParams(location.search).get("mode")==="tv";
 
 if(isTV()){
- tvPage.style.display="block";
- loginPage.style.display="none";
+ tvPage.style.display="block";loginPage.style.display="none";
  onValue(ref(db,"kunjungan"),s=>{
   tvPasien.innerHTML="";tvObat.innerHTML="";
   s.forEach(d=>{
@@ -140,83 +136,111 @@ if(isTV()){
   });
  });
 }else{
- window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value)
- .then(()=>{loginPage.style.display="none";dashboardPage.style.display="block"});
- window.logout=()=>signOut(auth).then(()=>location.reload());
 
- window.simpanPasien=()=>{
-  const rm="RM"+Date.now();
-  set(ref(db,"pasien/"+rm),{nama:nama.value});
- };
+window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value)
+.then(()=>{loginPage.style.display="none";dashboardPage.style.display="block";});
 
- function loadPasien(){
-  onValue(ref(db,"pasien"),s=>{
-   pasienSelect.innerHTML="";
-   s.forEach(d=>pasienSelect.innerHTML+=`<option value="${d.key}">${d.val().nama}</option>`);
-  });
+window.logout=()=>signOut(auth).then(()=>location.reload());
+
+onAuthStateChanged(auth,u=>{
+ if(!u) return;
+ get(ref(db,"users/"+u.uid)).then(s=>{
+  if(!s.exists()){alert("Role belum diatur");logout();return;}
+  CURRENT_ROLE=s.val().role;
+ });
+});
+
+window.show=id=>{
+ const btn=[...document.querySelectorAll(`.menu button`)]
+ .find(b=>b.onclick.toString().includes(`'${id}'`));
+ if(btn && !btn.dataset.role.split(",").includes(CURRENT_ROLE)){
+  alert("Akses ditolak");return;
  }
+ ["pasien","kunjungan","periksa","antrian","obat","resep","laporan"]
+ .forEach(x=>document.getElementById(x).style.display="none");
+ document.getElementById(id).style.display="block";
+ if(id==="kunjungan")loadPasien();
+ if(id==="periksa"||id==="resep")loadKunjungan();
+ if(id==="antrian")loadAntrian();
+ if(id==="obat")loadObat();
+};
 
- window.simpanKunjungan=()=>{
-  const id="A"+Date.now();
-  set(ref(db,"kunjungan/"+id),{rm:pasienSelect.value,status:"MENUNGGU"});
- };
+window.simpanPasien=()=>{
+ const rm="RM"+Date.now();
+ set(ref(db,"pasien/"+rm),{nama:nama.value});
+};
 
- function loadKunjungan(){
-  onValue(ref(db,"kunjungan"),s=>{
-   kunjunganSelect.innerHTML="";
-   kunjunganResep.innerHTML="";
-   s.forEach(d=>{
-    kunjunganSelect.innerHTML+=`<option>${d.key}</option>`;
-    kunjunganResep.innerHTML+=`<option>${d.key}</option>`;
-   });
-  });
- }
-
- window.simpanPemeriksaan=()=>{
-  update(ref(db,"kunjungan/"+kunjunganSelect.value),
-   {status:"KE FARMASI"});
-  speak(`Nomor antrian ${kunjunganSelect.value}, silakan ke farmasi`);
- };
-
- function loadAntrian(){
-  onValue(ref(db,"kunjungan"),s=>{
-   listAntrian.innerHTML="";
-   s.forEach(d=>{
-    if(d.val().status==="MENUNGGU")
-     listAntrian.innerHTML+=`<li>${d.key}
-     <button onclick="panggil('${d.key}')">Panggil</button></li>`;
-   });
-  });
- }
-
- window.panggil=id=>{
-  update(ref(db,"kunjungan/"+id),{status:"DIPANGGIL_DOKTER"});
-  speak(`Nomor antrian ${id}, silakan menuju ruang dokter`);
- };
-
- function loadObat(){
-  onValue(ref(db,"kunjungan"),s=>{
-   listObat.innerHTML="";
-   s.forEach(d=>{
-    if(d.val().status==="KE FARMASI")
-     listObat.innerHTML+=`<li>${d.key}
-     <button onclick="selesai('${d.key}')">Selesai</button></li>`;
-   });
-  });
- }
-
- window.selesai=id=>update(ref(db,"kunjungan/"+id),{status:"SELESAI"});
-
- window.show=id=>{
-  ["pasien","kunjungan","periksa","antrian","obat","resep","laporan"]
-  .forEach(x=>document.getElementById(x).style.display="none");
-  document.getElementById(id).style.display="block";
-  if(id==="kunjungan")loadPasien();
-  if(id==="periksa"||id==="resep")loadKunjungan();
-  if(id==="antrian")loadAntrian();
-  if(id==="obat")loadObat();
- };
+function loadPasien(){
+ onValue(ref(db,"pasien"),s=>{
+  pasienSelect.innerHTML="";
+  s.forEach(d=>pasienSelect.innerHTML+=
+   `<option value="${d.key}">${d.val().nama}</option>`);
+ });
 }
+
+window.simpanKunjungan=()=>{
+ const id="A"+Date.now();
+ set(ref(db,"kunjungan/"+id),{rm:pasienSelect.value,status:"MENUNGGU"});
+};
+
+function loadKunjungan(){
+ onValue(ref(db,"kunjungan"),s=>{
+  kunjunganSelect.innerHTML="";kunjunganResep.innerHTML="";
+  s.forEach(d=>{
+   kunjunganSelect.innerHTML+=`<option>${d.key}</option>`;
+   kunjunganResep.innerHTML+=`<option>${d.key}</option>`;
+  });
+ });
+}
+
+window.simpanPemeriksaan=()=>{
+ update(ref(db,"kunjungan/"+kunjunganSelect.value),{
+  status:"KE FARMASI",
+  waktuPeriksa:new Date().toISOString(),
+  dokter:auth.currentUser.uid
+ });
+ speak(`Nomor ${kunjunganSelect.value} ke farmasi`);
+};
+
+function loadAntrian(){
+ onValue(ref(db,"kunjungan"),s=>{
+  listAntrian.innerHTML="";
+  s.forEach(d=>{
+   if(d.val().status==="MENUNGGU")
+    listAntrian.innerHTML+=
+    `<li>${d.key}
+     <button onclick="panggil('${d.key}')">Panggil</button></li>`;
+  });
+ });
+}
+
+window.panggil=id=>{
+ update(ref(db,"kunjungan/"+id),{status:"DIPANGGIL_DOKTER"});
+ speak(`Nomor ${id} ke ruang dokter`);
+};
+
+function loadObat(){
+ onValue(ref(db,"kunjungan"),s=>{
+  listObat.innerHTML="";
+  s.forEach(d=>{
+   if(d.val().status==="KE FARMASI")
+    listObat.innerHTML+=
+    `<li>${d.key}
+     <button onclick="selesai('${d.key}')">Selesai</button></li>`;
+  });
+ });
+}
+
+window.selesai=id=>update(ref(db,"kunjungan/"+id),{status:"SELESAI"});
+}
+
+/* TTD */
+const c=document.getElementById("ttd");
+const ctx=c.getContext("2d");let draw=false;
+c.onmousedown=()=>draw=true;c.onmouseup=()=>draw=false;
+c.onmousemove=e=>{if(draw){ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();}};
+window.clearTTD=()=>ctx.clearRect(0,0,c.width,c.height);
+
 </script>
 </body>
 </html>
