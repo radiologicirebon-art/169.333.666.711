@@ -1,153 +1,132 @@
-<!--
-VERSI PRO++ – KLINIK UTAMA & RUMAH SAKIT
-TANPA MENGUBAH FUNGSI EXISTING
-DITAMBAHKAN: DASHBOARD, RM OTOMATIS, BARCODE, TTD DIGITAL, ACL, AUDIT LOG
--->
 
-<!-- ================= index.html (LOGIN) ================= -->
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>E-RM Klinik Utama | Login</title>
-<link rel="stylesheet" href="assets/css/style.css">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-</head>
-<body class="center">
-<h2>E-RM KLINIK UTAMA & RS</h2>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="login()">LOGIN</button>
-<p style="font-size:12px;color:#666">Versi PRO++ Terintegrasi</p>
-<script src="assets/js/app.js"></script>
-</body>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMR Klinik Dr. H. Dudi - Login</title>  <!-- Google Font -->  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">  <!-- Firebase SDK -->  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f766e, #134e4a);
+    }
+    .login-card {
+      background: #ffffff;
+      width: 380px;
+      padding: 32px;
+      border-radius: 14px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    .login-card h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f766e;
+      text-align: center;
+    }
+    .login-card p {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-top: 6px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0f766e;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0f766e;
+      border: none;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #115e59;
+    }
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .error {
+      color: red;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style></head>
+<body>  <div class="login-card">
+    <h1>EMR Klinik Dr. H. Dudi</h1>
+    <p>Elektronik Rekam Medis • Klinik Dokter Umum</p><label>Email</label>
+<input type="email" id="email" placeholder="contoh@klinik.com" />
+
+<label>Password</label>
+<input type="password" id="password" placeholder="********" />
+
+<button onclick="login()">Masuk Sistem</button>
+
+<div id="error" class="error"></div>
+
+<div class="footer">
+  © 2026 Klinik Dr. H. Dudi
+</div>
+
+  </div><script>
+  // ================= FIREBASE CONFIG =================
+  const firebaseConfig = {
+    databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // ================= LOGIN FUNCTION =================
+  function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorBox = document.getElementById('error');
+
+    errorBox.innerText = "";
+
+    if (!email || !password) {
+      errorBox.innerText = "Email dan password wajib diisi";
+      return;
+    }
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        sessionStorage.setItem("uid", userCredential.user.uid);
+        window.location.href = "dashboard.html";
+      })
+      .catch((error) => {
+        errorBox.innerText = "Login gagal: " + error.message;
+      });
+  }
+</script></body>
 </html>
-
-<!-- ================= assets/css/style.css ================= -->
-<style>
-body{font-family:Segoe UI,Arial;background:#eef2f7}
-.center{display:flex;flex-direction:column;gap:10px;max-width:340px;margin:120px auto}
-button{background:#0a3cff;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600}
-header{background:#0a3cff;color:#fff;padding:16px;font-size:18px}
-.card{background:#fff;padding:20px;border-radius:16px;margin:20px;box-shadow:0 4px 10px rgba(0,0,0,.08)}
-input,select{padding:10px;width:100%;margin:6px 0;border-radius:8px;border:1px solid #ccc}
-</style>
-
-<!-- ================= assets/js/app.js ================= -->
-<script>
-/* ===== FIREBASE INIT ===== */
-const firebaseConfig={apiKey:"ISI",authDomain:"ISI",databaseURL:"ISI",projectId:"ISI"};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.database();
-
-/* ===== LOGIN + ACL ===== */
-function login(){
-auth.signInWithEmailAndPassword(email.value,password.value)
-.then(r=>db.ref('users/'+r.user.uid).once('value'))
-.then(s=>{
- const role=s.val().role;
- audit('LOGIN',role);
- location.href='pages/'+role.toLowerCase()+'.html';
-})
-.catch(e=>alert(e.message));}
-
-/* ===== AUDIT LOG MEDIS ===== */
-function audit(action,role){
-db.ref('audit_log').push({
- user:auth.currentUser?.email||'system',
- role:role,
- action:action,
- time:new Date().toISOString()
-});}
-
-/* ===== NOMOR RM OTOMATIS ===== */
-function generateRM(){
- return 'RM-'+Date.now();
-}
-
-/* ===== BARCODE (TEXT BASE) ===== */
-function generateBarcode(text){
- return '|||' + text + '|||';
-}
-
-/* ===== CETAK PDF ===== */
-function cetakPDF(){
- audit('CETAK_PDF','SYSTEM');
- window.print();
-}
-</script>
-
-<!-- ================= pages/pendaftaran.html ================= -->
-<!DOCTYPE html><html><head><title>Pendaftaran</title><link rel="stylesheet" href="../assets/css/style.css"></head>
-<body><header>Pendaftaran Pasien</header>
-<div class="card">
-<input id="nama" placeholder="Nama Pasien">
-<select id="jenis"><option>Baru</option><option>Lama</option></select>
-<button onclick="simpan()">Simpan</button>
-</div>
-<script src="../assets/js/app.js"></script>
-<script>
-function simpan(){
- const rm=generateRM();
- db.ref('pasien').push({rm:rm,nama:nama.value,jenis:jenis.value});
- audit('DAFTAR_PASIEN','PENDAFTARAN');
- alert('Tersimpan | '+rm+' '+generateBarcode(rm));
-}
-</script>
-</body></html>
-
-<!-- ================= pages/dokter.html ================= -->
-<!DOCTYPE html><html><head><title>Dokter</title><link rel="stylesheet" href="../assets/css/style.css"></head>
-<body><header>Dokter</header>
-<div class="card">
-<button onclick="panggil()">Panggil Antrian</button>
-<input id="dx" placeholder="Diagnosa">
-<input id="rx" placeholder="Resep">
-<canvas id="ttd" style="border:1px solid #ccc"></canvas>
-<button onclick="kirim()">Verifikasi & Kirim</button>
-</div>
-<script src="../assets/js/app.js"></script>
-<script>
-function panggil(){db.ref('antrian/current').set(Date.now());audit('PANGGIL_ANTRIAN','DOKTER');}
-function kirim(){
- db.ref('resep').push({dx:dx.value,rx:rx.value,ttd:'base64',status:'verifikasi'});
- audit('INPUT_DIAGNOSA','DOKTER');
- alert('Terkirim ke Farmasi');
-}
-</script>
-</body></html>
-
-<!-- ================= pages/admin.html ================= -->
-<!DOCTYPE html><html><head><title>Admin</title><link rel="stylesheet" href="../assets/css/style.css"></head>
-<body><header>Dashboard Admin</header>
-<div class="card">
-<canvas id="chart"></canvas>
-<button onclick="cetakPDF()">Cetak Laporan</button>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="../assets/js/app.js"></script>
-<script>
-const ctx=document.getElementById('chart');
-new Chart(ctx,{type:'bar',data:{labels:['Pasien','Resep','Antrian'],datasets:[{data:[12,8,5]}]}});
-</script>
-</body></html>
-
-<!-- ================= tv.html (TV ANTRIAN REALTIME) ================= -->
-<!DOCTYPE html><html><head><title>TV Antrian</title></head>
-<body style="font-size:52px;text-align:center">
-<h1>ANTRIAN SAAT INI</h1>
-<div id="no"></div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>firebase.initializeApp(firebaseConfig);
-firebase.database().ref('antrian/current').on('value',s=>no.innerText=s.val());</script>
-</body></html>
-
-<!-- ================= integrations/satu-sehat-fhir.js ================= -->
-<script>
-// FHIR Encounter, Condition, MedicationRequest
-const fhirBundle={resourceType:'Bundle',type:'transaction',entry:[]};
-// Dikirim via Cloud Function / Backend RS
-</script>
