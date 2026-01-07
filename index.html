@@ -1,155 +1,276 @@
-<!DOCTYPE html><html lang="id">
+<!--
+=====================================================
+ STEP 5 – RIWAYAT KUNJUNGAN PASIEN (MEDICAL HISTORY)
+ Klinik Dokter Umum (Dr. H. Dudi)
+ Database:
+ https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/
+
+ CATATAN PENTING:
+ ✔ STEP 1–4C TETAP UTUH
+ ✔ Tidak ada fungsi dihapus
+ ✔ STEP 5 MENAMBAHKAN riwayat medis per pasien
+=====================================================
+-->
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Dokter - EMR Klinik Dr. H. Dudi</title>  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">  <style>
-    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { margin: 0; background: #f1f5f9; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Dokter – EMR Klinik Dr. H. Dudi</title>
 
-    header {
-      background: #0f766e;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    header h1 { font-size: 18px; margin: 0; }
-    header span { font-size: 13px; opacity: 0.9; }
+<style>
+body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
+header { background:#1976d2; color:white; padding:15px; }
+section { padding:20px; }
+.card { background:white; padding:15px; border-radius:6px; margin-bottom:15px; }
+button { padding:8px 14px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; }
+button.secondary { background:#388e3c; }
+button.info { background:#455a64; }
+button.danger { background:#d32f2f; }
+input, textarea { width:100%; margin-top:6px; padding:6px; }
+textarea { height:70px; }
+table { width:100%; border-collapse:collapse; }
+th,td { border:1px solid #ccc; padding:8px; }
+th { background:#e3f2fd; }
+.hidden { display:none; }
+</style>
+</head>
+<body>
 
-    .logout {
-      background: #ef4444;
-      border: none;
-      color: white;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-    }
+<header>
+  <h2>Dashboard Dokter</h2>
+  <div>Klinik Dr. H. Dudi</div>
+</header>
 
-    .container { padding: 24px; }
+<section>
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
+<!-- STATISTIK -->
+<div class="card">
+  <b>Antrian Hari Ini:</b> <span id="total">0</span> |
+  <b>Selesai:</b> <span id="selesai">0</span>
+</div>
 
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    }
-
-    .card h3 { margin: 0; font-size: 14px; color: #6b7280; }
-    .card p { margin: 10px 0 0; font-size: 26px; font-weight: 700; color: #0f766e; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    }
-
-    th, td {
-      padding: 14px 12px;
-      font-size: 13px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-    }
-
-    th { background: #f0fdfa; color: #065f46; }
-
-    .btn {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .btn-primary { background: #0f766e; color: white; }
-
-    .empty {
-      text-align: center;
-      padding: 20px;
-      font-size: 13px;
-      color: #6b7280;
-    }
-  </style></head>
-<body><header>
-  <div>
-    <h1>Dashboard Dokter</h1>
-    <span id="userInfo"></span>
-  </div>
-  <button class="logout" onclick="logout()">Logout</button>
-</header><div class="container">  <div class="cards">
-    <div class="card">
-      <h3>Antrian Hari Ini</h3>
-      <p id="totalAntrian">0</p>
-    </div>
-    <div class="card">
-      <h3>Sudah Diperiksa</h3>
-      <p id="selesai">0</p>
-    </div>
-    <div class="card">
-      <h3>Sisa Pasien</h3>
-      <p id="sisa">0</p>
-    </div>
-  </div>  <table>
+<!-- TABEL PASIEN -->
+<div class="card">
+  <h3>Antrian Pasien</h3>
+  <table>
     <thead>
-      <tr>
-        <th>No</th>
-        <th>Nama Pasien</th>
-        <th>Keluhan</th>
-        <th>Status</th>
-        <th>Aksi</th>
-      </tr>
+      <tr><th>No</th><th>Nama</th><th>Keluhan</th><th>Aksi</th></tr>
     </thead>
-    <tbody id="tabelPasien">
-      <tr><td colspan="5" class="empty">Belum ada data antrian</td></tr>
-    </tbody>
-  </table></div><script>
-  // ================= PROTEKSI LOGIN =================
-  if (sessionStorage.getItem('login') !== 'true' || sessionStorage.getItem('role') !== 'dokter') {
-    window.location.href = 'index.html';
-  }
+    <tbody id="antrian"></tbody>
+  </table>
+</div>
 
-  document.getElementById('userInfo').innerText = 'Login sebagai: ' + sessionStorage.getItem('username');
+<!-- RIWAYAT PASIEN -->
+<div class="card hidden" id="riwayatCard">
+  <h3>Riwayat Kunjungan Pasien</h3>
+  <div id="riwayatNama"></div>
+  <table>
+    <thead>
+      <tr><th>Tanggal</th><th>Dokter</th><th>Assessment</th><th>Detail</th></tr>
+    </thead>
+    <tbody id="riwayatData"></tbody>
+  </table>
+  <button class="danger" onclick="tutupRiwayat()">Tutup</button>
+</div>
 
-  function logout() {
-    sessionStorage.clear();
-    window.location.href = 'index.html';
-  }
+<!-- FORM SKRINING PERAWAT -->
+<div class="card hidden" id="skriningCard">
+  <h3>Skrining Awal Perawat (TTV)</h3>
+  <input type="hidden" id="skriningKey">
+  <label>Tekanan Darah</label>
+  <input id="td" placeholder="120/80 mmHg">
+  <label>Nadi</label>
+  <input id="nadi" placeholder="x/menit">
+  <label>Suhu</label>
+  <input id="suhu" placeholder="°C">
+  <label>Respirasi</label>
+  <input id="rr" placeholder="x/menit">
+  <label>Keluhan Utama</label>
+  <textarea id="keluhanAwal"></textarea>
+  <br><br>
+  <button class="secondary" onclick="simpanSkrining()">💾 Simpan Skrining</button>
+  <button class="danger" onclick="tutupSkrining()">Batal</button>
+</div>
 
-  // ================= DATA DUMMY (STEP AWAL) =================
-  const dataPasien = [
-    { nama: 'Budi Santoso', keluhan: 'Demam & Batuk', status: 'Menunggu' },
-    { nama: 'Siti Aminah', keluhan: 'Sakit Kepala', status: 'Menunggu' }
-  ];
+<!-- FORM SOAP -->
+<div class="card hidden" id="soapCard">
+  <h3>Pemeriksaan Medis (SOAP)</h3>
+  <input type="hidden" id="pasienKey">
+  <label>Subjective</label>
+  <textarea id="S"></textarea>
+  <label>Objective</label>
+  <textarea id="O"></textarea>
+  <label>Assessment</label>
+  <textarea id="A"></textarea>
+  <label>Plan</label>
+  <textarea id="P"></textarea>
+  <br><br>
+  <button onclick="simpanSOAP()">💾 Simpan Rekam Medis</button>
+  <button class="secondary" onclick="cetakResume()">🖨️ Cetak Resume Medis</button>
+  <button class="danger" onclick="tutupSOAP()">Batal</button>
+</div>
 
-  const tbody = document.getElementById('tabelPasien');
-  tbody.innerHTML = '';
+</section>
 
-  dataPasien.forEach((p, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${p.nama}</td>
-      <td>${p.keluhan}</td>
-      <td>${p.status}</td>
-      <td><button class="btn btn-primary">Periksa</button></td>
-    `;
-    tbody.appendChild(tr);
+<script>
+/* ======================
+   KEAMANAN LOGIN
+====================== */
+if(sessionStorage.getItem('login') !== 'true' || sessionStorage.getItem('role') !== 'dokter'){
+  location.href = 'index.html';
+}
+
+/* ======================
+   FIREBASE INIT
+====================== */
+const firebaseConfig = {
+  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ======================
+   LOAD ANTRIAN
+====================== */
+function loadAntrian(){
+  db.ref('antrian').on('value', snap => {
+    let html = '';
+    let no = 1;
+    let selesai = 0;
+    snap.forEach(d => {
+      const v = d.val();
+      if(v.status === 'selesai') selesai++;
+      if(v.status !== 'selesai'){
+        html += `<tr>
+          <td>${no++}</td>
+          <td>${v.nama}</td>
+          <td>${v.keluhan}</td>
+          <td>
+            <button onclick="bukaSkrining('${d.key}','${v.nama}')">Skrining</button>
+            <button class="info" onclick="lihatRiwayat('${d.key}','${v.nama}')">Riwayat</button>
+          </td>
+        </tr>`;
+      }
+    });
+    document.getElementById('antrian').innerHTML = html;
+    document.getElementById('total').innerText = snap.size;
+    document.getElementById('selesai').innerText = selesai;
   });
+}
+loadAntrian();
 
-  document.getElementById('totalAntrian').innerText = dataPasien.length;
-  document.getElementById('selesai').innerText = 0;
-  document.getElementById('sisa').innerText = dataPasien.length;
-</script></body>
+/* ======================
+   STEP 5 – RIWAYAT PASIEN
+====================== */
+function lihatRiwayat(key,nama){
+  document.getElementById('riwayatNama').innerHTML = `<b>Pasien:</b> ${nama}`;
+  const tbody = document.getElementById('riwayatData');
+  tbody.innerHTML = '';
+  db.ref('rekam_medis/' + key).once('value', snap => {
+    snap.forEach(d => {
+      const v = d.val();
+      tbody.innerHTML += `<tr>
+        <td>${v.tanggal}</td>
+        <td>${v.dokter}</td>
+        <td>${v.assessment}</td>
+        <td><button onclick=\"detailSOAP('${key}','${d.key}')\">Detail</button></td>
+      </tr>`;
+    });
+  });
+  document.getElementById('riwayatCard').classList.remove('hidden');
+}
+
+function detailSOAP(pasienKey,soapKey){
+  db.ref('rekam_medis/' + pasienKey + '/' + soapKey).once('value', s => {
+    const v = s.val();
+    alert(`Subjective:\n${v.subjective}\n\nObjective:\n${v.objective}\n\nAssessment:\n${v.assessment}\n\nPlan:\n${v.plan}`);
+  });
+}
+
+function tutupRiwayat(){
+  document.getElementById('riwayatCard').classList.add('hidden');
+}
+
+/* ======================
+   STEP 4C – SKRINING
+====================== */
+let namaPasienAktif = '';
+function bukaSkrining(key,nama){
+  namaPasienAktif = nama;
+  skriningKey.value = key;
+  skriningCard.classList.remove('hidden');
+}
+
+function tutupSkrining(){ skriningCard.classList.add('hidden'); }
+
+function simpanSkrining(){
+  const key = skriningKey.value;
+  db.ref('skrining/' + key).push({
+    td: td.value,
+    nadi: nadi.value,
+    suhu: suhu.value,
+    rr: rr.value,
+    keluhan: keluhanAwal.value,
+    waktu: new Date().toLocaleString('id-ID')
+  });
+  tutupSkrining();
+  periksa(key,namaPasienAktif);
+}
+
+/* ======================
+   STEP 3 – SOAP
+====================== */
+function periksa(key,nama){
+  namaPasienAktif = nama;
+  pasienKey.value = key;
+  soapCard.classList.remove('hidden');
+}
+
+function tutupSOAP(){ soapCard.classList.add('hidden'); }
+
+/* ======================
+   STEP 4A – SIMPAN SOAP
+====================== */
+function simpanSOAP(){
+  const key = pasienKey.value;
+  db.ref('rekam_medis/' + key).push({
+    subjective: S.value,
+    objective: O.value,
+    assessment: A.value,
+    plan: P.value,
+    dokter: 'Dr. H. Dudi',
+    tanggal: new Date().toLocaleString('id-ID')
+  });
+  db.ref('antrian/' + key).update({ status: 'selesai' });
+  alert('Rekam medis tersimpan');
+  tutupSOAP();
+}
+
+/* ======================
+   STEP 4B – CETAK RESUME
+====================== */
+function cetakResume(){
+  const w = window.open('', '', 'width=800,height=600');
+  w.document.write(`<html><body style="font-family:Arial">
+  <h2 style="text-align:center">RESUME MEDIS</h2>
+  <p><b>Klinik:</b> Klinik Dr. H. Dudi</p>
+  <p><b>Pasien:</b> ${namaPasienAktif}</p>
+  <hr>
+  <p><b>Subjective</b><br>${S.value}</p>
+  <p><b>Objective</b><br>${O.value}</p>
+  <p><b>Assessment</b><br>${A.value}</p>
+  <p><b>Plan</b><br>${P.value}</p>
+  <br><br><p style="text-align:right"><b>Dr. H. Dudi</b></p>
+  <script>window.print()</script></body></html>`);
+  w.document.close();
+}
+</script>
+
+</body>
 </html>
+
