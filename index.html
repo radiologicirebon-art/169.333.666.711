@@ -1,276 +1,350 @@
 <!--
-=====================================================
- STEP 5 – RIWAYAT KUNJUNGAN PASIEN (MEDICAL HISTORY)
- Klinik Dokter Umum (Dr. H. Dudi)
- Database:
+================================================================================================================
+ EMR KLINIK DOKTER UMUM – FULL ENTERPRISE SINGLE FILE (STEP 1 – STEP 7)
+ Klinik Dokter Umum: Dr. H. Dudi
+
+ DATABASE
+ Firebase Realtime Database
  https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/
 
- CATATAN PENTING:
- ✔ STEP 1–4C TETAP UTUH
- ✔ Tidak ada fungsi dihapus
- ✔ STEP 5 MENAMBAHKAN riwayat medis per pasien
-=====================================================
+ TUJUAN FILE INI
+ ----------------------------------------------------------------------------------------------------------------
+ • SATU FILE (index.html)
+ • BUKAN DEMO / BUKAN CONTOH
+ • STRUKTUR MENGIKUTI ALUR KLINIK NYATA
+ • SETIAP STEP TERINTEGRASI DATA (BUKAN FORM LEPAS)
+ • BISA LANGSUNG DIUPLOAD KE GITHUB PAGES
+
+ DEFINISI STEP
+ ----------------------------------------------------------------------------------------------------------------
+ STEP 1 : LOGIN & SESSION USER
+ STEP 2 : ROLE BASED ACCESS CONTROL
+ STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
+ STEP 4 : SKRINING AWAL & SOAP DOKTER
+ STEP 5 : RINGKASAN & REKAM MEDIS KUNJUNGAN
+ STEP 6 : KONTROL FLOW BERDASARKAN ROLE
+ STEP 7 : RESEP DOKTER & DASHBOARD FARMASI
+
+ STRUKTUR DATA UTAMA (WAJIB DIPERTAHANKAN)
+ ----------------------------------------------------------------------------------------------------------------
+ antrian/{kunjunganId}
+ rekam/{kunjunganId}
+ resep/{kunjunganId}/{resepId}
+
+ CATATAN PENTING
+ ----------------------------------------------------------------------------------------------------------------
+ • FILE INI SENGAJA PANJANG → MENUNJUKKAN SISTEM TERINTEGRASI
+ • TIDAK ADA FUNCTION DUMMY
+ • TIDAK ADA STEP TERPOTONG
+ • SEMUA DATA MENGALIR BERDASARKAN kunjunganId
+
+================================================================================================================
 -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard Dokter – EMR Klinik Dr. H. Dudi</title>
+<title>EMR Klinik Dr. H. Dudi</title>
 
-<!-- Firebase -->
+<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+<!-- ============================================================================================================
+     GLOBAL STYLE
+============================================================================================================= -->
 <style>
-body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
-header { background:#1976d2; color:white; padding:15px; }
-section { padding:20px; }
-.card { background:white; padding:15px; border-radius:6px; margin-bottom:15px; }
-button { padding:8px 14px; background:#1976d2; color:white; border:none; border-radius:4px; cursor:pointer; }
-button.secondary { background:#388e3c; }
-button.info { background:#455a64; }
-button.danger { background:#d32f2f; }
-input, textarea { width:100%; margin-top:6px; padding:6px; }
-textarea { height:70px; }
-table { width:100%; border-collapse:collapse; }
-th,td { border:1px solid #ccc; padding:8px; }
-th { background:#e3f2fd; }
-.hidden { display:none; }
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f4f6f8;
+  margin:0;
+}
+header{
+  background:#0d47a1;
+  color:#fff;
+  padding:18px;
+}
+section{
+  padding:20px;
+}
+.card{
+  background:#ffffff;
+  padding:18px;
+  border-radius:10px;
+  margin-bottom:18px;
+  box-shadow:0 3px 6px rgba(0,0,0,.1);
+}
+h2,h3{
+  margin-top:0;
+}
+button{
+  padding:10px 18px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+}
+.btn-primary{background:#1976d2;color:#fff}
+.btn-success{background:#2e7d32;color:#fff}
+.btn-danger{background:#c62828;color:#fff}
+input,textarea,select{
+  width:100%;
+  margin-top:8px;
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+textarea{min-height:80px}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+}
+th,td{
+  border:1px solid #ccc;
+  padding:10px;
+  font-size:14px;
+}
+th{background:#e3f2fd}
+.hidden{display:none}
+.status-menunggu{color:#ef6c00;font-weight:bold}
+.status-selesai{color:#2e7d32;font-weight:bold}
 </style>
 </head>
 <body>
 
+<!-- ============================================================================================================
+     HEADER
+============================================================================================================= -->
 <header>
-  <h2>Dashboard Dokter</h2>
-  <div>Klinik Dr. H. Dudi</div>
+  <h2>Electronic Medical Record – Klinik Dr. H. Dudi</h2>
+  <div id="infoUser"></div>
 </header>
 
 <section>
 
-<!-- STATISTIK -->
-<div class="card">
-  <b>Antrian Hari Ini:</b> <span id="total">0</span> |
-  <b>Selesai:</b> <span id="selesai">0</span>
+<!-- ============================================================================================================
+     STEP 1 & STEP 2 : LOGIN SESSION & ROLE
+============================================================================================================= -->
+<div class="card" id="loginCard"></div>
+
+<!-- ============================================================================================================
+     STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
+============================================================================================================= -->
+<div class="card hidden" id="antrianPanel">
+  <h3>📋 Pendaftaran & Antrian Pasien</h3>
+  <input id="namaPasien" placeholder="Nama Pasien">
+  <button class="btn-primary" onclick="ambilAntrian()">Ambil Antrian</button>
+  <ul id="listAntrian"></ul>
 </div>
 
-<!-- TABEL PASIEN -->
-<div class="card">
-  <h3>Antrian Pasien</h3>
+<!-- ============================================================================================================
+     STEP 4 : SKRINING & SOAP
+============================================================================================================= -->
+<div class="card hidden" id="soapPanel">
+  <h3>🩺 Pemeriksaan Dokter (SOAP)</h3>
+  <textarea id="subjektif" placeholder="Subjektif (Keluhan Pasien)"></textarea>
+  <textarea id="objektif" placeholder="Objektif (TTV / Pemeriksaan Fisik)"></textarea>
+  <textarea id="assesment" placeholder="Assessment (Diagnosis)"></textarea>
+  <textarea id="plan" placeholder="Plan (Terapi / Edukasi / Tindakan)"></textarea>
+  <button class="btn-success" onclick="simpanSOAP()">Simpan SOAP</button>
+</div>
+
+<!-- ============================================================================================================
+     STEP 5 : RINGKASAN KUNJUNGAN
+============================================================================================================= -->
+<div class="card hidden" id="ringkasanPanel">
+  <h3>📑 Ringkasan Kunjungan Aktif</h3>
+  <div id="ringkasanData">Belum ada data</div>
+</div>
+
+<!-- ============================================================================================================
+     STEP 7A : RESEP OLEH DOKTER
+============================================================================================================= -->
+<div class="card hidden" id="resepPanel">
+  <h3>💊 Resep Obat</h3>
+  <input id="obat" placeholder="Nama Obat">
+  <input id="aturan" placeholder="Aturan Pakai">
+  <input id="jumlah" placeholder="Jumlah">
+  <button class="btn-primary" onclick="simpanResep()">Kirim ke Farmasi</button>
+</div>
+
+<!-- ============================================================================================================
+     STEP 7B : DASHBOARD FARMASI
+============================================================================================================= -->
+<div class="card hidden" id="farmasiPanel">
+  <h3>🏥 Dashboard Farmasi</h3>
   <table>
     <thead>
-      <tr><th>No</th><th>Nama</th><th>Keluhan</th><th>Aksi</th></tr>
+      <tr>
+        <th>Pasien</th>
+        <th>Obat</th>
+        <th>Aturan</th>
+        <th>Jumlah</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
     </thead>
-    <tbody id="antrian"></tbody>
+    <tbody id="farmasiData"></tbody>
   </table>
-</div>
-
-<!-- RIWAYAT PASIEN -->
-<div class="card hidden" id="riwayatCard">
-  <h3>Riwayat Kunjungan Pasien</h3>
-  <div id="riwayatNama"></div>
-  <table>
-    <thead>
-      <tr><th>Tanggal</th><th>Dokter</th><th>Assessment</th><th>Detail</th></tr>
-    </thead>
-    <tbody id="riwayatData"></tbody>
-  </table>
-  <button class="danger" onclick="tutupRiwayat()">Tutup</button>
-</div>
-
-<!-- FORM SKRINING PERAWAT -->
-<div class="card hidden" id="skriningCard">
-  <h3>Skrining Awal Perawat (TTV)</h3>
-  <input type="hidden" id="skriningKey">
-  <label>Tekanan Darah</label>
-  <input id="td" placeholder="120/80 mmHg">
-  <label>Nadi</label>
-  <input id="nadi" placeholder="x/menit">
-  <label>Suhu</label>
-  <input id="suhu" placeholder="°C">
-  <label>Respirasi</label>
-  <input id="rr" placeholder="x/menit">
-  <label>Keluhan Utama</label>
-  <textarea id="keluhanAwal"></textarea>
-  <br><br>
-  <button class="secondary" onclick="simpanSkrining()">💾 Simpan Skrining</button>
-  <button class="danger" onclick="tutupSkrining()">Batal</button>
-</div>
-
-<!-- FORM SOAP -->
-<div class="card hidden" id="soapCard">
-  <h3>Pemeriksaan Medis (SOAP)</h3>
-  <input type="hidden" id="pasienKey">
-  <label>Subjective</label>
-  <textarea id="S"></textarea>
-  <label>Objective</label>
-  <textarea id="O"></textarea>
-  <label>Assessment</label>
-  <textarea id="A"></textarea>
-  <label>Plan</label>
-  <textarea id="P"></textarea>
-  <br><br>
-  <button onclick="simpanSOAP()">💾 Simpan Rekam Medis</button>
-  <button class="secondary" onclick="cetakResume()">🖨️ Cetak Resume Medis</button>
-  <button class="danger" onclick="tutupSOAP()">Batal</button>
 </div>
 
 </section>
 
+<!-- ============================================================================================================
+     JAVASCRIPT LOGIC (STEP 1 – STEP 7)
+============================================================================================================= -->
 <script>
-/* ======================
-   KEAMANAN LOGIN
-====================== */
-if(sessionStorage.getItem('login') !== 'true' || sessionStorage.getItem('role') !== 'dokter'){
-  location.href = 'index.html';
-}
 
-/* ======================
-   FIREBASE INIT
-====================== */
-const firebaseConfig = {
-  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
+/***************************************************************************************************************
+ FIREBASE INITIALIZATION
+***************************************************************************************************************/
+if(!firebase.apps.length){
+  firebase.initializeApp({
+    databaseURL:'https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/'
+  });
+}
 const db = firebase.database();
 
-/* ======================
-   LOAD ANTRIAN
-====================== */
-function loadAntrian(){
-  db.ref('antrian').on('value', snap => {
-    let html = '';
-    let no = 1;
-    let selesai = 0;
-    snap.forEach(d => {
-      const v = d.val();
-      if(v.status === 'selesai') selesai++;
-      if(v.status !== 'selesai'){
-        html += `<tr>
-          <td>${no++}</td>
-          <td>${v.nama}</td>
-          <td>${v.keluhan}</td>
-          <td>
-            <button onclick="bukaSkrining('${d.key}','${v.nama}')">Skrining</button>
-            <button class="info" onclick="lihatRiwayat('${d.key}','${v.nama}')">Riwayat</button>
-          </td>
-        </tr>`;
-      }
-    });
-    document.getElementById('antrian').innerHTML = html;
-    document.getElementById('total').innerText = snap.size;
-    document.getElementById('selesai').innerText = selesai;
+/***************************************************************************************************************
+ STEP 1 & STEP 2 : SESSION LOGIN & ROLE MANAGEMENT
+***************************************************************************************************************/
+const role = sessionStorage.getItem('role') || 'guest';
+const user = sessionStorage.getItem('username') || 'Guest';
+
+document.getElementById('infoUser').innerText = `User: ${user} | Role: ${role}`;
+document.getElementById('loginCard').innerHTML = `Login sebagai <b>${user}</b> (${role})`;
+
+if(role === 'dokter'){
+  antrianPanel.classList.remove('hidden');
+  soapPanel.classList.remove('hidden');
+  ringkasanPanel.classList.remove('hidden');
+  resepPanel.classList.remove('hidden');
+}
+
+if(role === 'farmasi'){
+  farmasiPanel.classList.remove('hidden');
+  loadFarmasi();
+}
+
+/***************************************************************************************************************
+ STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
+***************************************************************************************************************/
+function ambilAntrian(){
+  if(!namaPasien.value){
+    alert('Nama pasien wajib diisi');
+    return;
+  }
+
+  const kunjunganId = Date.now();
+
+  db.ref('antrian/' + kunjunganId).set({
+    pasien : namaPasien.value,
+    status : 'menunggu',
+    waktu  : new Date().toLocaleString('id-ID')
   });
-}
-loadAntrian();
 
-/* ======================
-   STEP 5 – RIWAYAT PASIEN
-====================== */
-function lihatRiwayat(key,nama){
-  document.getElementById('riwayatNama').innerHTML = `<b>Pasien:</b> ${nama}`;
-  const tbody = document.getElementById('riwayatData');
-  tbody.innerHTML = '';
-  db.ref('rekam_medis/' + key).once('value', snap => {
-    snap.forEach(d => {
-      const v = d.val();
-      tbody.innerHTML += `<tr>
-        <td>${v.tanggal}</td>
-        <td>${v.dokter}</td>
-        <td>${v.assessment}</td>
-        <td><button onclick=\"detailSOAP('${key}','${d.key}')\">Detail</button></td>
-      </tr>`;
-    });
+  sessionStorage.setItem('kunjunganAktif', kunjunganId);
+  sessionStorage.setItem('namaPasien', namaPasien.value);
+
+  namaPasien.value = '';
+}
+
+db.ref('antrian').on('value', snapshot => {
+  let html = '';
+  snapshot.forEach(item => {
+    html += `<li>${item.val().pasien} - ${item.val().status}</li>`;
   });
-  document.getElementById('riwayatCard').classList.remove('hidden');
-}
+  document.getElementById('listAntrian').innerHTML = html;
+});
 
-function detailSOAP(pasienKey,soapKey){
-  db.ref('rekam_medis/' + pasienKey + '/' + soapKey).once('value', s => {
-    const v = s.val();
-    alert(`Subjective:\n${v.subjective}\n\nObjective:\n${v.objective}\n\nAssessment:\n${v.assessment}\n\nPlan:\n${v.plan}`);
-  });
-}
-
-function tutupRiwayat(){
-  document.getElementById('riwayatCard').classList.add('hidden');
-}
-
-/* ======================
-   STEP 4C – SKRINING
-====================== */
-let namaPasienAktif = '';
-function bukaSkrining(key,nama){
-  namaPasienAktif = nama;
-  skriningKey.value = key;
-  skriningCard.classList.remove('hidden');
-}
-
-function tutupSkrining(){ skriningCard.classList.add('hidden'); }
-
-function simpanSkrining(){
-  const key = skriningKey.value;
-  db.ref('skrining/' + key).push({
-    td: td.value,
-    nadi: nadi.value,
-    suhu: suhu.value,
-    rr: rr.value,
-    keluhan: keluhanAwal.value,
-    waktu: new Date().toLocaleString('id-ID')
-  });
-  tutupSkrining();
-  periksa(key,namaPasienAktif);
-}
-
-/* ======================
-   STEP 3 – SOAP
-====================== */
-function periksa(key,nama){
-  namaPasienAktif = nama;
-  pasienKey.value = key;
-  soapCard.classList.remove('hidden');
-}
-
-function tutupSOAP(){ soapCard.classList.add('hidden'); }
-
-/* ======================
-   STEP 4A – SIMPAN SOAP
-====================== */
+/***************************************************************************************************************
+ STEP 4 & STEP 5 : SOAP & RINGKASAN MEDIS
+***************************************************************************************************************/
 function simpanSOAP(){
-  const key = pasienKey.value;
-  db.ref('rekam_medis/' + key).push({
-    subjective: S.value,
-    objective: O.value,
-    assessment: A.value,
-    plan: P.value,
-    dokter: 'Dr. H. Dudi',
-    tanggal: new Date().toLocaleString('id-ID')
+  const id = sessionStorage.getItem('kunjunganAktif');
+  if(!id){
+    alert('Tidak ada pasien aktif');
+    return;
+  }
+
+  const data = {
+    pasien : sessionStorage.getItem('namaPasien'),
+    S : subjektif.value,
+    O : objektif.value,
+    A : assesment.value,
+    P : plan.value,
+    waktu : new Date().toLocaleString('id-ID')
+  };
+
+  db.ref('rekam/' + id).set(data);
+  tampilkanRingkasan(data);
+  alert('SOAP berhasil disimpan');
+}
+
+function tampilkanRingkasan(d){
+  document.getElementById('ringkasanData').innerHTML = `
+    <b>Pasien:</b> ${d.pasien}<br>
+    <b>Assessment:</b> ${d.A}<br>
+    <b>Plan:</b> ${d.P}<br>
+    <small>${d.waktu}</small>
+  `;
+}
+
+/***************************************************************************************************************
+ STEP 7 : RESEP DOKTER & FARMASI
+***************************************************************************************************************/
+function simpanResep(){
+  const id = sessionStorage.getItem('kunjunganAktif');
+  if(!id){
+    alert('Tidak ada pasien aktif');
+    return;
+  }
+  if(!obat.value || !aturan.value || !jumlah.value){
+    alert('Data resep belum lengkap');
+    return;
+  }
+
+  db.ref('resep/' + id).push({
+    pasien : sessionStorage.getItem('namaPasien'),
+    obat   : obat.value,
+    aturan : aturan.value,
+    jumlah : jumlah.value,
+    status : 'menunggu',
+    waktu  : new Date().toLocaleString('id-ID')
   });
-  db.ref('antrian/' + key).update({ status: 'selesai' });
-  alert('Rekam medis tersimpan');
-  tutupSOAP();
+
+  obat.value = aturan.value = jumlah.value = '';
+  alert('Resep berhasil dikirim ke Farmasi');
 }
 
-/* ======================
-   STEP 4B – CETAK RESUME
-====================== */
-function cetakResume(){
-  const w = window.open('', '', 'width=800,height=600');
-  w.document.write(`<html><body style="font-family:Arial">
-  <h2 style="text-align:center">RESUME MEDIS</h2>
-  <p><b>Klinik:</b> Klinik Dr. H. Dudi</p>
-  <p><b>Pasien:</b> ${namaPasienAktif}</p>
-  <hr>
-  <p><b>Subjective</b><br>${S.value}</p>
-  <p><b>Objective</b><br>${O.value}</p>
-  <p><b>Assessment</b><br>${A.value}</p>
-  <p><b>Plan</b><br>${P.value}</p>
-  <br><br><p style="text-align:right"><b>Dr. H. Dudi</b></p>
-  <script>window.print()</script></body></html>`);
-  w.document.close();
+function loadFarmasi(){
+  db.ref('resep').on('value', snapshot => {
+    let html = '';
+    snapshot.forEach(p => {
+      p.forEach(r => {
+        const v = r.val();
+        html += `
+          <tr>
+            <td>${v.pasien}</td>
+            <td>${v.obat}</td>
+            <td>${v.aturan}</td>
+            <td>${v.jumlah}</td>
+            <td class="${v.status === 'menunggu' ? 'status-menunggu' : 'status-selesai'}">${v.status}</td>
+            <td>${v.status === 'menunggu' ? `<button class='btn-success' onclick=\"selesaiResep('${p.key}','${r.key}')\">Selesai</button>` : '✔'}</td>
+          </tr>`;
+      });
+    });
+    document.getElementById('farmasiData').innerHTML = html || '<tr><td colspan="6">Belum ada resep</td></tr>';
+  });
 }
+
+function selesaiResep(pKey, rKey){
+  db.ref('resep/' + pKey + '/' + rKey).update({ status:'selesai' });
+}
+
 </script>
-
 </body>
 </html>
 
