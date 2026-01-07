@@ -1,132 +1,155 @@
-
 <!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMR Klinik Dr. H. Dudi - Login</title>  <!-- Google Font -->  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">  <!-- Firebase SDK -->  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #0f766e, #134e4a);
-    }
-    .login-card {
-      background: #ffffff;
-      width: 380px;
-      padding: 32px;
-      border-radius: 14px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-    }
-    .login-card h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 700;
-      color: #0f766e;
-      text-align: center;
-    }
-    .login-card p {
-      text-align: center;
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 28px;
-    }
-    label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #374151;
-    }
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-top: 6px;
-      margin-bottom: 18px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 14px;
-    }
-    input:focus {
-      outline: none;
-      border-color: #0f766e;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Dokter - EMR Klinik Dr. H. Dudi</title>  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">  <style>
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { margin: 0; background: #f1f5f9; }
+
+    header {
       background: #0f766e;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 { font-size: 18px; margin: 0; }
+    header span { font-size: 13px; opacity: 0.9; }
+
+    .logout {
+      background: #ef4444;
       border: none;
       color: white;
-      font-size: 15px;
-      font-weight: 600;
-      border-radius: 8px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .container { padding: 24px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    }
+
+    .card h3 { margin: 0; font-size: 14px; color: #6b7280; }
+    .card p { margin: 10px 0 0; font-size: 26px; font-weight: 700; color: #0f766e; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    }
+
+    th, td {
+      padding: 14px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    th { background: #f0fdfa; color: #065f46; }
+
+    .btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 12px;
       cursor: pointer;
     }
-    button:hover {
-      background: #115e59;
-    }
-    .footer {
-      margin-top: 20px;
+
+    .btn-primary { background: #0f766e; color: white; }
+
+    .empty {
       text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-    .error {
-      color: red;
+      padding: 20px;
       font-size: 13px;
-      text-align: center;
-      margin-top: 10px;
+      color: #6b7280;
     }
   </style></head>
-<body>  <div class="login-card">
-    <h1>EMR Klinik Dr. H. Dudi</h1>
-    <p>Elektronik Rekam Medis • Klinik Dokter Umum</p><label>Email</label>
-<input type="email" id="email" placeholder="contoh@klinik.com" />
-
-<label>Password</label>
-<input type="password" id="password" placeholder="********" />
-
-<button onclick="login()">Masuk Sistem</button>
-
-<div id="error" class="error"></div>
-
-<div class="footer">
-  © 2026 Klinik Dr. H. Dudi
-</div>
-
-  </div><script>
-  // ================= FIREBASE CONFIG =================
-  const firebaseConfig = {
-    databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  // ================= LOGIN FUNCTION =================
-  function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorBox = document.getElementById('error');
-
-    errorBox.innerText = "";
-
-    if (!email || !password) {
-      errorBox.innerText = "Email dan password wajib diisi";
-      return;
-    }
-
-    auth.signInWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        sessionStorage.setItem("uid", userCredential.user.uid);
-        window.location.href = "dashboard.html";
-      })
-      .catch((error) => {
-        errorBox.innerText = "Login gagal: " + error.message;
-      });
+<body><header>
+  <div>
+    <h1>Dashboard Dokter</h1>
+    <span id="userInfo"></span>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</header><div class="container">  <div class="cards">
+    <div class="card">
+      <h3>Antrian Hari Ini</h3>
+      <p id="totalAntrian">0</p>
+    </div>
+    <div class="card">
+      <h3>Sudah Diperiksa</h3>
+      <p id="selesai">0</p>
+    </div>
+    <div class="card">
+      <h3>Sisa Pasien</h3>
+      <p id="sisa">0</p>
+    </div>
+  </div>  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama Pasien</th>
+        <th>Keluhan</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="tabelPasien">
+      <tr><td colspan="5" class="empty">Belum ada data antrian</td></tr>
+    </tbody>
+  </table></div><script>
+  // ================= PROTEKSI LOGIN =================
+  if (sessionStorage.getItem('login') !== 'true' || sessionStorage.getItem('role') !== 'dokter') {
+    window.location.href = 'index.html';
   }
+
+  document.getElementById('userInfo').innerText = 'Login sebagai: ' + sessionStorage.getItem('username');
+
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // ================= DATA DUMMY (STEP AWAL) =================
+  const dataPasien = [
+    { nama: 'Budi Santoso', keluhan: 'Demam & Batuk', status: 'Menunggu' },
+    { nama: 'Siti Aminah', keluhan: 'Sakit Kepala', status: 'Menunggu' }
+  ];
+
+  const tbody = document.getElementById('tabelPasien');
+  tbody.innerHTML = '';
+
+  dataPasien.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${p.nama}</td>
+      <td>${p.keluhan}</td>
+      <td>${p.status}</td>
+      <td><button class="btn btn-primary">Periksa</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('totalAntrian').innerText = dataPasien.length;
+  document.getElementById('selesai').innerText = 0;
+  document.getElementById('sisa').innerText = dataPasien.length;
 </script></body>
 </html>
