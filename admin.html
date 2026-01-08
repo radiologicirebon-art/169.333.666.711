@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>EMR Klinik – Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body{margin:0;font-family:Arial;background:#f5f7fa}
+    header{background:#1e88e5;color:#fff;padding:15px}
+    .container{display:flex}
+    aside{width:220px;background:#263238;color:#fff;min-height:100vh}
+    aside a{display:block;color:#fff;text-decoration:none;padding:12px}
+    aside a:hover{background:#37474f}
+    main{flex:1;padding:20px}
+    .card{background:#fff;padding:15px;border-radius:6px;margin-bottom:15px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #ddd;padding:8px}
+    th{background:#eee}
+    input,select,button{padding:6px;margin:3px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+
+<header>
+  <b>EMR KLINIK – ADMIN PANEL</b>
+  <span style="float:right">
+    <button onclick="logout()">Logout</button>
+  </span>
+</header>
+
+<div class="container">
+  <aside>
+    <a href="#" onclick="show('dashboard')">📊 Dashboard</a>
+    <a href="#" onclick="show('dokter')">👨‍⚕️ Data Dokter</a>
+    <a href="#" onclick="show('poli')">🏥 Data Poli</a>
+    <a href="#" onclick="show('user')">👤 User</a>
+    <a href="#" onclick="show('kunjungan')">📋 Kunjungan</a>
+    <a href="#" onclick="show('log')">🕒 Log Aktivitas</a>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card">
+      <h3>Dashboard</h3>
+      <p>Total Dokter: <b id="jDokter">0</b></p>
+      <p>Total Poli: <b id="jPoli">0</b></p>
+      <p>Total User: <b id="jUser">0</b></p>
+      <p>Total Kunjungan: <b id="jKunjungan">0</b></p>
+    </div>
+
+    <!-- DOKTER -->
+    <div id="dokter" class="card hidden">
+      <h3>Data Dokter</h3>
+      <input id="dokterNama" placeholder="Nama Dokter">
+      <input id="dokterSpes" placeholder="Spesialis">
+      <button onclick="simpanDokter()">Simpan</button>
+      <table>
+        <thead><tr><th>Nama</th><th>Spesialis</th><th>Aksi</th></tr></thead>
+        <tbody id="listDokter"></tbody>
+      </table>
+    </div>
+
+    <!-- POLI -->
+    <div id="poli" class="card hidden">
+      <h3>Data Poli</h3>
+      <input id="poliNama" placeholder="Nama Poli">
+      <button onclick="simpanPoli()">Simpan</button>
+      <table>
+        <thead><tr><th>Nama Poli</th><th>Aksi</th></tr></thead>
+        <tbody id="listPoli"></tbody>
+      </table>
+    </div>
+
+    <!-- USER -->
+    <div id="user" class="card hidden">
+      <h3>User</h3>
+      <input id="userEmail" placeholder="Email">
+      <select id="userRole">
+        <option value="admin">Admin</option>
+        <option value="dokter">Dokter</option>
+        <option value="perawat">Perawat</option>
+        <option value="pendaftaran">Pendaftaran</option>
+      </select>
+      <button onclick="simpanUser()">Simpan</button>
+      <table>
+        <thead><tr><th>Email</th><th>Role</th></tr></thead>
+        <tbody id="listUser"></tbody>
+      </table>
+    </div>
+
+    <!-- KUNJUNGAN -->
+    <div id="kunjungan" class="card hidden">
+      <h3>Data Kunjungan</h3>
+      <table>
+        <thead><tr><th>Tanggal</th><th>Pasien</th><th>Poli</th></tr></thead>
+        <tbody id="listKunjungan"></tbody>
+      </table>
+    </div>
+
+    <!-- LOG -->
+    <div id="log" class="card hidden">
+      <h3>Log Aktivitas</h3>
+      <ul id="listLog"></ul>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ================== FIREBASE CONFIG ================== */
+const firebaseConfig = {
+  apiKey: "ISI_API_KEY",
+  authDomain: "ISI_AUTH_DOMAIN",
+  databaseURL: "ISI_DB_URL",
+  projectId: "ISI_PROJECT_ID",
+  storageBucket: "ISI_BUCKET",
+  messagingSenderId: "ISI_SENDER_ID",
+  appId: "ISI_APP_ID"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const auth = firebase.auth();
+const db   = firebase.database();
+
+/* ================== AUTH GUARD ================== */
+auth.onAuthStateChanged(user=>{
+  if(!user){ location.href="index.html"; return; }
+  db.ref("users/"+user.uid+"/role").once("value").then(s=>{
+    if(s.val()!=="admin"){
+      alert("Akses ditolak!");
+      auth.signOut();
+      location.href="index.html";
+    }
+  });
+});
+
+/* ================== NAV ================== */
+function show(id){
+  document.querySelectorAll("main .card").forEach(c=>c.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+/* ================== DASHBOARD ================== */
+function loadDashboard(){
+  db.ref("dokter").on("value",s=> jDokter.innerText = s.numChildren());
+  db.ref("poli").on("value",s=> jPoli.innerText = s.numChildren());
+  db.ref("users").on("value",s=> jUser.innerText = s.numChildren());
+  db.ref("kunjungan").on("value",s=> jKunjungan.innerText = s.numChildren());
+}
+loadDashboard();
+
+/* ================== DOKTER ================== */
+function simpanDokter(){
+  const nama = dokterNama.value;
+  const spes = dokterSpes.value;
+  if(!nama) return alert("Nama kosong");
+  const id = db.ref("dokter").push().key;
+  db.ref("dokter/"+id).set({nama,spes});
+  dokterNama.value=""; dokterSpes.value="";
+  log("Tambah dokter "+nama);
+}
+db.ref("dokter").on("value",snap=>{
+  listDokter.innerHTML="";
+  snap.forEach(c=>{
+    listDokter.innerHTML += `<tr>
+      <td>${c.val().nama}</td>
+      <td>${c.val().spes||""}</td>
+      <td><button onclick="hapus('dokter','${c.key}')">Hapus</button></td>
+    </tr>`;
+  });
+});
+
+/* ================== POLI ================== */
+function simpanPoli(){
+  const nama = poliNama.value;
+  if(!nama) return alert("Nama kosong");
+  const id = db.ref("poli").push().key;
+  db.ref("poli/"+id).set({nama});
+  poliNama.value="";
+  log("Tambah poli "+nama);
+}
+db.ref("poli").on("value",snap=>{
+  listPoli.innerHTML="";
+  snap.forEach(c=>{
+    listPoli.innerHTML += `<tr>
+      <td>${c.val().nama}</td>
+      <td><button onclick="hapus('poli','${c.key}')">Hapus</button></td>
+    </tr>`;
+  });
+});
+
+/* ================== USER ================== */
+function simpanUser(){
+  const email = userEmail.value;
+  const role  = userRole.value;
+  if(!email) return alert("Email kosong");
+  const id = email.replace(/\./g,"_");
+  db.ref("userMaster/"+id).set({email,role});
+  userEmail.value="";
+  log("Set user "+email+" sebagai "+role);
+}
+db.ref("userMaster").on("value",snap=>{
+  listUser.innerHTML="";
+  snap.forEach(c=>{
+    listUser.innerHTML += `<tr>
+      <td>${c.val().email}</td>
+      <td>${c.val().role}</td>
+    </tr>`;
+  });
+});
+
+/* ================== KUNJUNGAN ================== */
+db.ref("kunjungan").limitToLast(50).on("value",snap=>{
+  listKunjungan.innerHTML="";
+  snap.forEach(c=>{
+    const v=c.val();
+    listKunjungan.innerHTML+=`<tr>
+      <td>${v.tgl||""}</td>
+      <td>${v.pasien||""}</td>
+      <td>${v.poli||""}</td>
+    </tr>`;
+  });
+});
+
+/* ================== LOG ================== */
+function log(teks){
+  const id = db.ref("log").push().key;
+  db.ref("log/"+id).set({
+    waktu: new Date().toLocaleString(),
+    teks
+  });
+}
+db.ref("log").limitToLast(30).on("value",snap=>{
+  listLog.innerHTML="";
+  snap.forEach(c=>{
+    listLog.innerHTML+=`<li>${c.val().waktu} - ${c.val().teks}</li>`;
+  });
+});
+
+/* ================== UTIL ================== */
+function hapus(path,id){
+  if(confirm("Hapus data?")){
+    db.ref(path+"/"+id).remove();
+    log("Hapus "+path+" "+id);
+  }
+}
+function logout(){
+  auth.signOut();
+  location.href="index.html";
+}
+</script>
+
+</body>
+</html>
