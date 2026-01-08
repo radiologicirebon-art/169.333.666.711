@@ -130,15 +130,54 @@ tr:hover{background:#f9fafb;cursor:pointer}
 <div id="perawat" class="card hidden">
   <h2>Perawat</h2>
   <table><tbody id="tabelPerawat"></tbody></table>
+
+</div>
+  <!-- ANAMNESA PERAWAT (RS VERSION) -->
+<div id="anamnesa" class="card hidden">
+  <h2>Anamnesa & Triase Perawat</h2>
+
+  <div class="stat">
+    <div>
+      <small>Nama Pasien</small>
+      <b id="infoPerawat"></b>
+    </div>
+    <div>
+      <small>No RM</small>
+      <b id="infoRM"></b>
+    </div>
+  </div>
+
+  <h4>Keluhan Utama</h4>
+  <textarea id="keluhan" placeholder="Keluhan utama pasien"></textarea>
+
+  <h4>Riwayat Singkat</h4>
+  <textarea id="riwayat" placeholder="Riwayat penyakit sekarang / dahulu"></textarea>
+
+  <h4>Tanda Vital</h4>
+  <input id="td" placeholder="Tekanan Darah (mmHg)">
+  <input id="nadi" placeholder="Nadi (x/menit)">
+  <input id="rr" placeholder="Respirasi (x/menit)">
+  <input id="suhu" placeholder="Suhu (°C)">
+  <input id="spo2" placeholder="SpO2 (%)">
+
+  <h4>Antropometri</h4>
+  <input id="bb" placeholder="Berat Badan (kg)">
+  <input id="tb" placeholder="Tinggi Badan (cm)">
+
+  <h4>Triase</h4>
+  <select id="triase">
+    <option value="">Pilih Triase</option>
+    <option value="Hijau">Hijau (Stabil)</option>
+    <option value="Kuning">Kuning (Perlu Observasi)</option>
+    <option value="Merah">Merah (Gawat)</option>
+  </select>
+
+  <h4>Catatan Perawat</h4>
+  <textarea id="catatanPerawat" placeholder="Catatan tambahan perawat"></textarea>
+
+  <button class="primary" onclick="simpanAnamnesa()">Simpan & Kirim ke Dokter</button>
 </div>
 
-<div id="anamnesa" class="card hidden">
-  <h2>Anamnesa</h2>
-  <p id="infoPerawat"></p>
-  <textarea id="keluhan" placeholder="Keluhan"></textarea>
-  <input id="ttv" placeholder="TTV">
-  <button class="primary" onclick="simpanAnamnesa()">Simpan</button>
-</div>
 
 <!-- DOKTER -->
 <div id="dokter" class="card hidden">
