@@ -1,350 +1,117 @@
 <!--
-================================================================================================================
- EMR KLINIK DOKTER UMUM – FULL ENTERPRISE SINGLE FILE (STEP 1 – STEP 7)
- Klinik Dokter Umum: Dr. H. Dudi
-
- DATABASE
- Firebase Realtime Database
- https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/
-
- TUJUAN FILE INI
- ----------------------------------------------------------------------------------------------------------------
- • SATU FILE (index.html)
- • BUKAN DEMO / BUKAN CONTOH
- • STRUKTUR MENGIKUTI ALUR KLINIK NYATA
- • SETIAP STEP TERINTEGRASI DATA (BUKAN FORM LEPAS)
- • BISA LANGSUNG DIUPLOAD KE GITHUB PAGES
-
- DEFINISI STEP
- ----------------------------------------------------------------------------------------------------------------
- STEP 1 : LOGIN & SESSION USER
- STEP 2 : ROLE BASED ACCESS CONTROL
- STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
- STEP 4 : SKRINING AWAL & SOAP DOKTER
- STEP 5 : RINGKASAN & REKAM MEDIS KUNJUNGAN
- STEP 6 : KONTROL FLOW BERDASARKAN ROLE
- STEP 7 : RESEP DOKTER & DASHBOARD FARMASI
-
- STRUKTUR DATA UTAMA (WAJIB DIPERTAHANKAN)
- ----------------------------------------------------------------------------------------------------------------
- antrian/{kunjunganId}
- rekam/{kunjunganId}
- resep/{kunjunganId}/{resepId}
-
- CATATAN PENTING
- ----------------------------------------------------------------------------------------------------------------
- • FILE INI SENGAJA PANJANG → MENUNJUKKAN SISTEM TERINTEGRASI
- • TIDAK ADA FUNCTION DUMMY
- • TIDAK ADA STEP TERPOTONG
- • SEMUA DATA MENGALIR BERDASARKAN kunjunganId
-
-================================================================================================================
+EMR KLINIK UTAMA – PROFESSIONAL MODE
+TAHAP 2A + 2B
+MASTER PASIEN & KUNJUNGAN (CORE KLINIK)
+MENIRU STRUKTUR SISTEM KLINIK PHP
 -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EMR Klinik Dr. H. Dudi</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMR Klinik Utama | Pasien & Kunjungan</title>
 
-<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- ============================================================================================================
-     GLOBAL STYLE
-============================================================================================================= -->
 <style>
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f4f6f8;
-  margin:0;
-}
-header{
-  background:#0d47a1;
-  color:#fff;
-  padding:18px;
-}
-section{
-  padding:20px;
-}
-.card{
-  background:#ffffff;
-  padding:18px;
-  border-radius:10px;
-  margin-bottom:18px;
-  box-shadow:0 3px 6px rgba(0,0,0,.1);
-}
-h2,h3{
-  margin-top:0;
-}
-button{
-  padding:10px 18px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
-}
-.btn-primary{background:#1976d2;color:#fff}
-.btn-success{background:#2e7d32;color:#fff}
-.btn-danger{background:#c62828;color:#fff}
-input,textarea,select{
-  width:100%;
-  margin-top:8px;
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-textarea{min-height:80px}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:12px;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:10px;
-  font-size:14px;
-}
-th{background:#e3f2fd}
+body{font-family:Arial,Helvetica,sans-serif;background:#eef2f7;margin:0}
+header{background:#0d47a1;color:#fff;padding:14px 20px;font-size:18px}
+.container{padding:24px;max-width:1100px;margin:auto}
+.card{background:#fff;border-radius:10px;padding:22px;box-shadow:0 4px 10px rgba(0,0,0,.08);margin-bottom:20px}
+input,select,button{padding:10px;width:100%;margin-top:10px}
+button{background:#0d47a1;color:#fff;border:none;border-radius:6px;cursor:pointer}
+button:hover{opacity:.9}
 .hidden{display:none}
-.status-menunggu{color:#ef6c00;font-weight:bold}
-.status-selesai{color:#2e7d32;font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px}
+th{background:#e3f2fd}
 </style>
 </head>
 <body>
+<header>EMR KLINIK UTAMA – MASTER PASIEN & KUNJUNGAN</header>
 
-<!-- ============================================================================================================
-     HEADER
-============================================================================================================= -->
-<header>
-  <h2>Electronic Medical Record – Klinik Dr. H. Dudi</h2>
-  <div id="infoUser"></div>
-</header>
+<div class="container">
 
-<section>
-
-<!-- ============================================================================================================
-     STEP 1 & STEP 2 : LOGIN SESSION & ROLE
-============================================================================================================= -->
-<div class="card" id="loginCard"></div>
-
-<!-- ============================================================================================================
-     STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
-============================================================================================================= -->
-<div class="card hidden" id="antrianPanel">
-  <h3>📋 Pendaftaran & Antrian Pasien</h3>
-  <input id="namaPasien" placeholder="Nama Pasien">
-  <button class="btn-primary" onclick="ambilAntrian()">Ambil Antrian</button>
-  <ul id="listAntrian"></ul>
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+  <h3>Login Sistem</h3>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
 </div>
 
-<!-- ============================================================================================================
-     STEP 4 : SKRINING & SOAP
-============================================================================================================= -->
-<div class="card hidden" id="soapPanel">
-  <h3>🩺 Pemeriksaan Dokter (SOAP)</h3>
-  <textarea id="subjektif" placeholder="Subjektif (Keluhan Pasien)"></textarea>
-  <textarea id="objektif" placeholder="Objektif (TTV / Pemeriksaan Fisik)"></textarea>
-  <textarea id="assesment" placeholder="Assessment (Diagnosis)"></textarea>
-  <textarea id="plan" placeholder="Plan (Terapi / Edukasi / Tindakan)"></textarea>
-  <button class="btn-success" onclick="simpanSOAP()">Simpan SOAP</button>
+<!-- CORE -->
+<div class="card hidden" id="coreBox">
+  <h3>Master Pasien</h3>
+  <input id="nama" placeholder="Nama Pasien">
+  <input id="nik" placeholder="NIK">
+  <input id="tgl" type="date">
+  <select id="jk"><option>L</option><option>P</option></select>
+  <input id="alamat" placeholder="Alamat">
+  <button onclick="simpanPasien()">Simpan Pasien</button>
 </div>
 
-<!-- ============================================================================================================
-     STEP 5 : RINGKASAN KUNJUNGAN
-============================================================================================================= -->
-<div class="card hidden" id="ringkasanPanel">
-  <h3>📑 Ringkasan Kunjungan Aktif</h3>
-  <div id="ringkasanData">Belum ada data</div>
+<div class="card hidden" id="kunjunganBox">
+  <h3>Registrasi Kunjungan</h3>
+  <input id="rmKunjungan" placeholder="No RM">
+  <input id="poli" placeholder="Poli">
+  <input id="dokter" placeholder="Dokter">
+  <button onclick="buatKunjungan()">Buat Kunjungan</button>
 </div>
 
-<!-- ============================================================================================================
-     STEP 7A : RESEP OLEH DOKTER
-============================================================================================================= -->
-<div class="card hidden" id="resepPanel">
-  <h3>💊 Resep Obat</h3>
-  <input id="obat" placeholder="Nama Obat">
-  <input id="aturan" placeholder="Aturan Pakai">
-  <input id="jumlah" placeholder="Jumlah">
-  <button class="btn-primary" onclick="simpanResep()">Kirim ke Farmasi</button>
-</div>
-
-<!-- ============================================================================================================
-     STEP 7B : DASHBOARD FARMASI
-============================================================================================================= -->
-<div class="card hidden" id="farmasiPanel">
-  <h3>🏥 Dashboard Farmasi</h3>
+<div class="card hidden" id="listBox">
+  <h3>Daftar Kunjungan</h3>
   <table>
-    <thead>
-      <tr>
-        <th>Pasien</th>
-        <th>Obat</th>
-        <th>Aturan</th>
-        <th>Jumlah</th>
-        <th>Status</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody id="farmasiData"></tbody>
+    <thead><tr><th>No RM</th><th>Nama</th><th>Poli</th><th>Dokter</th><th>Status</th></tr></thead>
+    <tbody id="kunjunganTable"></tbody>
   </table>
 </div>
 
-</section>
+</div>
 
-<!-- ============================================================================================================
-     JAVASCRIPT LOGIC (STEP 1 – STEP 7)
-============================================================================================================= -->
 <script>
+const firebaseConfig={databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
 
-/***************************************************************************************************************
- FIREBASE INITIALIZATION
-***************************************************************************************************************/
-if(!firebase.apps.length){
-  firebase.initializeApp({
-    databaseURL:'https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/'
-  });
-}
-const db = firebase.database();
+function login(){auth.signInWithEmailAndPassword(email.value,password.value).catch(e=>alert(e.message));}
 
-/***************************************************************************************************************
- STEP 1 & STEP 2 : SESSION LOGIN & ROLE MANAGEMENT
-***************************************************************************************************************/
-const role = sessionStorage.getItem('role') || 'guest';
-const user = sessionStorage.getItem('username') || 'Guest';
-
-document.getElementById('infoUser').innerText = `User: ${user} | Role: ${role}`;
-document.getElementById('loginCard').innerHTML = `Login sebagai <b>${user}</b> (${role})`;
-
-if(role === 'dokter'){
-  antrianPanel.classList.remove('hidden');
-  soapPanel.classList.remove('hidden');
-  ringkasanPanel.classList.remove('hidden');
-  resepPanel.classList.remove('hidden');
-}
-
-if(role === 'farmasi'){
-  farmasiPanel.classList.remove('hidden');
-  loadFarmasi();
-}
-
-/***************************************************************************************************************
- STEP 3 : PENDAFTARAN & ANTRIAN PASIEN
-***************************************************************************************************************/
-function ambilAntrian(){
-  if(!namaPasien.value){
-    alert('Nama pasien wajib diisi');
-    return;
-  }
-
-  const kunjunganId = Date.now();
-
-  db.ref('antrian/' + kunjunganId).set({
-    pasien : namaPasien.value,
-    status : 'menunggu',
-    waktu  : new Date().toLocaleString('id-ID')
-  });
-
-  sessionStorage.setItem('kunjunganAktif', kunjunganId);
-  sessionStorage.setItem('namaPasien', namaPasien.value);
-
-  namaPasien.value = '';
-}
-
-db.ref('antrian').on('value', snapshot => {
-  let html = '';
-  snapshot.forEach(item => {
-    html += `<li>${item.val().pasien} - ${item.val().status}</li>`;
-  });
-  document.getElementById('listAntrian').innerHTML = html;
+auth.onAuthStateChanged(user=>{
+ if(!user)return;
+ loginBox.classList.add('hidden');
+ coreBox.classList.remove('hidden');
+ kunjunganBox.classList.remove('hidden');
+ listBox.classList.remove('hidden');
+ loadKunjungan();
 });
 
-/***************************************************************************************************************
- STEP 4 & STEP 5 : SOAP & RINGKASAN MEDIS
-***************************************************************************************************************/
-function simpanSOAP(){
-  const id = sessionStorage.getItem('kunjunganAktif');
-  if(!id){
-    alert('Tidak ada pasien aktif');
-    return;
-  }
+function generateRM(){return 'RM'+Date.now();}
 
-  const data = {
-    pasien : sessionStorage.getItem('namaPasien'),
-    S : subjektif.value,
-    O : objektif.value,
-    A : assesment.value,
-    P : plan.value,
-    waktu : new Date().toLocaleString('id-ID')
-  };
-
-  db.ref('rekam/' + id).set(data);
-  tampilkanRingkasan(data);
-  alert('SOAP berhasil disimpan');
+function simpanPasien(){
+ const rm=generateRM();
+ const data={rm,nama:nama.value,nik:nik.value,tgl_lahir:tgl.value,jk:jk.value,alamat:alamat.value};
+ db.ref('pasien/'+rm).set(data);
+ alert('Pasien tersimpan dengan RM: '+rm);
 }
 
-function tampilkanRingkasan(d){
-  document.getElementById('ringkasanData').innerHTML = `
-    <b>Pasien:</b> ${d.pasien}<br>
-    <b>Assessment:</b> ${d.A}<br>
-    <b>Plan:</b> ${d.P}<br>
-    <small>${d.waktu}</small>
-  `;
+function buatKunjungan(){
+ const id=db.ref('kunjungan').push().key;
+ const data={no_rm:rmKunjungan.value,poli:poli.value,dokter:dokter.value,tanggal:new Date().toISOString(),status:'TERDAFTAR'};
+ db.ref('kunjungan/'+id).set(data);
 }
 
-/***************************************************************************************************************
- STEP 7 : RESEP DOKTER & FARMASI
-***************************************************************************************************************/
-function simpanResep(){
-  const id = sessionStorage.getItem('kunjunganAktif');
-  if(!id){
-    alert('Tidak ada pasien aktif');
-    return;
-  }
-  if(!obat.value || !aturan.value || !jumlah.value){
-    alert('Data resep belum lengkap');
-    return;
-  }
-
-  db.ref('resep/' + id).push({
-    pasien : sessionStorage.getItem('namaPasien'),
-    obat   : obat.value,
-    aturan : aturan.value,
-    jumlah : jumlah.value,
-    status : 'menunggu',
-    waktu  : new Date().toLocaleString('id-ID')
+function loadKunjungan(){
+ db.ref('kunjungan').on('value',snap=>{
+  kunjunganTable.innerHTML='';
+  snap.forEach(s=>{
+    const d=s.val();
+    kunjunganTable.innerHTML+=`<tr><td>${d.no_rm}</td><td>-</td><td>${d.poli}</td><td>${d.dokter}</td><td>${d.status}</td></tr>`;
   });
-
-  obat.value = aturan.value = jumlah.value = '';
-  alert('Resep berhasil dikirim ke Farmasi');
+ });
 }
-
-function loadFarmasi(){
-  db.ref('resep').on('value', snapshot => {
-    let html = '';
-    snapshot.forEach(p => {
-      p.forEach(r => {
-        const v = r.val();
-        html += `
-          <tr>
-            <td>${v.pasien}</td>
-            <td>${v.obat}</td>
-            <td>${v.aturan}</td>
-            <td>${v.jumlah}</td>
-            <td class="${v.status === 'menunggu' ? 'status-menunggu' : 'status-selesai'}">${v.status}</td>
-            <td>${v.status === 'menunggu' ? `<button class='btn-success' onclick=\"selesaiResep('${p.key}','${r.key}')\">Selesai</button>` : '✔'}</td>
-          </tr>`;
-      });
-    });
-    document.getElementById('farmasiData').innerHTML = html || '<tr><td colspan="6">Belum ada resep</td></tr>';
-  });
-}
-
-function selesaiResep(pKey, rKey){
-  db.ref('resep/' + pKey + '/' + rKey).update({ status:'selesai' });
-}
-
 </script>
 </body>
 </html>
-
