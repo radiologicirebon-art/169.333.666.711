@@ -209,10 +209,14 @@ button.primary:active{transform:scale(.97)}
 <script>
 /* ================= FIREBASE ================= */
 firebase.initializeApp({
-  apiKey:"ISI_API_KEY",
-  authDomain:"ISI_AUTH_DOMAIN",
-  databaseURL:"ISI_DB_URL",
-  projectId:"ISI_PROJECT_ID"
+  apiKey: "AIzaSyAzUQ8QXpwBoqVf02v0dG3onWekhkA46Bg",
+  authDomain: "develop-program-erm.firebaseapp.com",
+  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "develop-program-erm",
+  storageBucket: "develop-program-erm.firebasestorage.app",
+  messagingSenderId: "135373847578",
+  appId: "1:135373847578:web:12ebdc802cb9176e82e5a3",
+  measurementId: "G-B6TTRC25ND"
 });
 
 const auth = firebase.auth();
@@ -222,8 +226,14 @@ let currentAntrian = null;
 
 /* ================= AUTH ================= */
 function login(){
-  auth.signInWithEmailAndPassword(email.value, password.value)
-  .catch(e => alert(e.message));
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      // sukses → onAuthStateChanged akan handle UI
+    })
+    .catch(err => alert(err.message));
 }
 
 function logout(){ auth.signOut(); location.reload(); }
