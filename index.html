@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EMR Klinik Modern - DEMO</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMR Klinik Modern - Demo Interaktif</title>
 
-<!-- FIREBASE (DATABASE ONLY) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -14,35 +13,58 @@
 body{margin:0;background:#f9fafb;color:#111827}
 .hidden{display:none}
 
+/* HEADER */
 header{
   height:56px;background:#fff;border-bottom:1px solid #e5e7eb;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 20px;font-weight:600
 }
+
+/* LAYOUT */
 .app{display:flex;min-height:calc(100vh - 56px)}
-nav{
-  width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px
-}
+nav{width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px}
 nav button{
-  width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;
-  border-radius:8px;border:none;background:transparent;cursor:pointer
+  width:100%;padding:10px 12px;margin-bottom:6px;
+  border-radius:8px;border:none;background:transparent;cursor:pointer;text-align:left
 }
 nav button:hover{background:#f3f4f6}
 main{flex:1;padding:24px}
+
+/* CARD */
 .card{
   background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;
-  box-shadow:0 8px 20px rgba(0,0,0,.04)
+  box-shadow:0 8px 20px rgba(0,0,0,.04);
+  transition:.15s
 }
+.card:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.08)}
+
 h2{margin:0 0 12px;font-size:18px}
+small{color:#6b7280}
+
+/* DASHBOARD */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;
+}
+.stat{
+  padding:16px;border-radius:14px;
+  background:#f9fafb;border:1px solid #e5e7eb
+}
+.stat b{font-size:28px}
+
+/* FORM */
 label{font-size:13px;color:#6b7280}
 input,textarea,select{
-  width:100%;padding:10px 12px;margin-top:4px;margin-bottom:14px;
+  width:100%;padding:10px 12px;margin:6px 0 14px;
   border-radius:10px;border:1px solid #d1d5db
 }
 button.primary{
   background:#2563eb;color:#fff;border:none;
   padding:10px 16px;border-radius:10px;cursor:pointer
 }
+
+/* LIST */
 .list{display:flex;flex-direction:column;gap:8px}
 .item{
   padding:12px;border:1px solid #e5e7eb;border-radius:10px;
@@ -58,7 +80,7 @@ button.primary{
 <body>
 
 <header>
-  <span>EMR Klinik Modern <small style="color:#6b7280">(DEMO)</small></span>
+  <span>EMR Klinik Modern <small>Demo Interaktif</small></span>
   <select id="roleSwitch" onchange="setRole(this.value)">
     <option value="">Pilih Role</option>
     <option value="perawat">Perawat</option>
@@ -72,11 +94,13 @@ button.primary{
 
 <main>
 
+<!-- DASHBOARD -->
 <div id="dashboard" class="card">
-  <h2>Dashboard</h2>
-  <p style="color:#6b7280">Mode Demo tanpa login</p>
+  <h2 id="dashTitle">Dashboard</h2>
+  <div id="dashContent"></div>
 </div>
 
+<!-- TRIAGE -->
 <div id="triase" class="card hidden">
   <h2>Triase Pasien</h2>
   <label>Nama Pasien</label>
@@ -92,11 +116,13 @@ button.primary{
   <button class="primary" onclick="simpanTriase()">Simpan</button>
 </div>
 
+<!-- ANTRIAN -->
 <div id="antrian" class="card hidden">
   <h2>Antrian Dokter</h2>
   <div id="listAntrian" class="list"></div>
 </div>
 
+<!-- SOAP -->
 <div id="soap" class="card hidden">
   <h2>SOAP</h2>
   <textarea id="sS" placeholder="Subjective"></textarea>
@@ -106,9 +132,10 @@ button.primary{
   <button class="primary" onclick="simpanSOAP()">Selesaikan</button>
 </div>
 
+<!-- FARMASI -->
 <div id="farmasi" class="card hidden">
   <h2>Farmasi</h2>
-  <div id="listResep" class="list"></div>
+  <p><small>Demo placeholder (resep bisa dikembangkan)</small></p>
 </div>
 
 </main>
@@ -116,17 +143,19 @@ button.primary{
 
 <script>
 firebase.initializeApp({
-  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
+  databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
-const db = firebase.database();
+const db=firebase.database();
 
-let currentRole = '';
-let currentAntrian = null;
+let currentRole='';
+let currentAntrian=null;
+let antrianData={};
 
 function setRole(role){
-  currentRole = role;
+  currentRole=role;
   buildMenu();
   show('dashboard');
+  renderDashboard();
 }
 
 function buildMenu(){
@@ -149,6 +178,39 @@ function show(id){
   document.getElementById(id).classList.remove('hidden');
 }
 
+function renderDashboard(){
+  dashContent.innerHTML='';
+  if(currentRole==='perawat'){
+    dashTitle.innerText='Dashboard Perawat';
+    dashContent.innerHTML=`
+      <div class="stats">
+        <div class="stat"><small>Total Pasien</small><br><b>${Object.keys(antrianData).length}</b></div>
+        <div class="stat"><small>Hijau</small><br><b>${count('hijau')}</b></div>
+        <div class="stat"><small>Kuning</small><br><b>${count('kuning')}</b></div>
+        <div class="stat"><small>Merah</small><br><b>${count('merah')}</b></div>
+      </div>`;
+  }
+  if(currentRole==='dokter'){
+    dashTitle.innerText='Dashboard Dokter';
+    dashContent.innerHTML=`
+      <div class="stats">
+        <div class="stat"><small>Menunggu</small><br><b>${Object.keys(antrianData).length}</b></div>
+        <div class="stat"><small>Prioritas</small><br><b>${count('kuning')+count('merah')}</b></div>
+      </div>`;
+  }
+  if(currentRole==='farmasi'){
+    dashTitle.innerText='Dashboard Farmasi';
+    dashContent.innerHTML=`
+      <div class="stats">
+        <div class="stat"><small>Resep Masuk</small><br><b>0</b></div>
+      </div>`;
+  }
+}
+
+function count(k){
+  return Object.values(antrianData).filter(a=>a.kategori===k).length;
+}
+
 function simpanTriase(){
   db.ref('antrian').push({
     nama:tNama.value,
@@ -157,12 +219,13 @@ function simpanTriase(){
     waktu:new Date().toLocaleString()
   });
   tNama.value='';tKeluhan.value='';
-  alert('Triase tersimpan');
 }
 
 db.ref('antrian').on('value',snap=>{
+  antrianData={};
   listAntrian.innerHTML='';
   snap.forEach(c=>{
+    antrianData[c.key]=c.val();
     const d=c.val();
     const div=document.createElement('div');
     div.className='item';
@@ -176,6 +239,7 @@ db.ref('antrian').on('value',snap=>{
     }
     listAntrian.appendChild(div);
   });
+  renderDashboard();
 });
 
 function simpanSOAP(){
