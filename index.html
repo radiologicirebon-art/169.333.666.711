@@ -60,6 +60,7 @@ tr:hover{background:#f9fafb;cursor:pointer}
     <option value="perawat">Perawat</option>
     <option value="dokter">Dokter</option>
     <option value="farmasi">Farmasi</option>
+    <option value="tv">TV Antrian</option>
   </select>
 </header>
 
@@ -70,7 +71,7 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <div id="dashboard" class="card">
   <h2>Dashboard</h2>
-  <p>Pilih role untuk mulai</p>
+  <p>Silakan pilih role</p>
 </div>
 
 <!-- PENDAFTARAN -->
@@ -121,6 +122,13 @@ tr:hover{background:#f9fafb;cursor:pointer}
   <button class="success" onclick="selesaiFarmasi()">Obat Diserahkan</button>
 </div>
 
+<!-- TV ANTRIAN -->
+<div id="tv" class="card hidden" style="text-align:center">
+  <h1 style="font-size:48px">ANTRIAN</h1>
+  <div id="tvNomor" style="font-size:120px;font-weight:800">-</div>
+  <div id="tvNama" style="font-size:36px">Menunggu</div>
+</div>
+
 </main>
 </div>
 
@@ -130,6 +138,7 @@ firebase.initializeApp({
 });
 const db=firebase.database();
 let pasienAktif=null;
+let terakhirDipanggil=null;
 
 function setRole(r){
 menu.innerHTML='';
@@ -138,6 +147,7 @@ if(r==='pendaftaran')add('Pendaftaran','pendaftaran');
 if(r==='perawat')add('Perawat','perawat');
 if(r==='dokter')add('Dokter','dokter');
 if(r==='farmasi')add('Farmasi','farmasi');
+if(r==='tv')add('TV Antrian','tv');
 show('dashboard');
 }
 function add(l,i){
@@ -149,7 +159,6 @@ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
 document.getElementById(i).classList.remove('hidden');
 }
 
-/* DAFTAR */
 function daftarPasien(){
 db.ref('kunjungan_hari_ini').push({
 nama:namaPasien.value,
@@ -159,7 +168,6 @@ status:'menunggu_perawat'
 alert('Terdaftar');
 }
 
-/* LISTENER */
 db.ref('kunjungan_hari_ini').on('value',s=>{
 tabelPerawat.innerHTML='';
 tabelDokter.innerHTML='';
@@ -167,7 +175,6 @@ tabelFarmasi.innerHTML='';
 s.forEach(c=>{
 let d=c.val();
 
-/* PERAWAT */
 if(d.status==='menunggu_perawat'){
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
@@ -175,7 +182,6 @@ r.onclick=()=>{pasienAktif={k:c.key,d};infoPerawat.innerText=d.nama;show('anamne
 tabelPerawat.appendChild(r);
 }
 
-/* DOKTER */
 if(d.status==='menunggu_dokter'){
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
@@ -183,21 +189,29 @@ r.onclick=()=>{pasienAktif={k:c.key,d};infoDokter.innerText=d.nama;show('soap');
 tabelDokter.appendChild(r);
 }
 
-/* FARMASI */
 if(d.status==='selesai_dokter'){
 let r=document.createElement('tr');
-r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td><td><button class="success">Panggil</button></td>`;
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>
+<td><button class="success" onclick="
+db.ref('kunjungan_hari_ini/${c.key}').update({dipanggil:true})
+">Panggil</button></td>`;
 r.onclick=()=>{pasienAktif={k:c.key,d};
-infoFarmasi.innerText=`${d.nama} (${d.antrian})`;
+infoFarmasi.innerText=d.nama;
 resepFarmasi.value=d.resep;
 show('detailFarmasi');};
 tabelFarmasi.appendChild(r);
 }
 
+if(d.dipanggil && terakhirDipanggil!==c.key){
+terakhirDipanggil=c.key;
+tvNomor.innerText=d.antrian;
+tvNama.innerText=d.nama;
+panggilSuara(d.antrian,d.nama);
+}
+
 });
 });
 
-/* SIMPAN */
 function simpanAnamnesa(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('menunggu_dokter');
 show('perawat');
@@ -213,6 +227,15 @@ show('dokter');
 function selesaiFarmasi(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('selesai_farmasi');
 show('farmasi');
+}
+
+function panggilSuara(no,nama){
+const u=new SpeechSynthesisUtterance(
+`Nomor antrian ${no}, atas nama ${nama}, silakan menuju ruang pelayanan`
+);
+u.lang='id-ID';u.rate=0.9;
+speechSynthesis.cancel();
+speechSynthesis.speak(u);
 }
 </script>
 
