@@ -78,17 +78,19 @@ th{background:#e3f2fd}
  ************************************************/
 // ===== FIREBASE CONFIG (WAJIB LENGKAP) =====
 const firebaseConfig = {
-  apiKey: "ISI_API_KEY_FIREBASE_ANDA",
+  apiKey: "AIzaSyAzUQ8QXpwBoqVf02v0dG3onWekhkA46Bg",
   authDomain: "develop-program-erm.firebaseapp.com",
   databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "develop-program-erm",
-  storageBucket: "develop-program-erm.appspot.com",
-  messagingSenderId: "ISI_SENDER_ID",
-  appId: "ISI_APP_ID"
+  storageBucket: "develop-program-erm.firebasestorage.app",
+  messagingSenderId: "135373847578",
+  appId: "1:135373847578:web:12ebdc802cb9176e82e5a3"
 };
 
 // ===== INIT FIREBASE (KUNCI ERROR) =====
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 // ===== GLOBAL AUTH & DB =====
 let auth;
@@ -97,6 +99,17 @@ let db;
 // ===== SAFE INIT =====
 window.addEventListener('load', () => {
   auth = firebase.auth();
+  db   = firebase.database();
+
+  auth.onAuthStateChanged(user => {
+    if (!user) return;
+    loginBox.classList.add('hidden');
+    coreBox.classList.remove('hidden');
+    kunjunganBox.classList.remove('hidden');
+    listBox.classList.remove('hidden');
+    loadKunjungan();
+  });
+});
   db   = firebase.database();
 });
 
