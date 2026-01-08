@@ -9,8 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-*{box-sizing:border-box;font-family:Inter,Arial,sans-serif}
-body{margin:0;background:#f9fafb;color:#111827}
+*{box-sizing:border-box;font-family:Inter,Arial}
+body{margin:0;background:#f9fafb}
 .hidden{display:none}
 header{
   height:56px;background:#fff;border-bottom:1px solid #e5e7eb;
@@ -19,39 +19,31 @@ header{
 }
 .app{display:flex;min-height:calc(100vh - 56px)}
 nav{
-  width:220px;background:#fff;border-right:1px solid #e5e7eb;
-  padding:12px
+  width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px
 }
 nav button{
   width:100%;padding:10px;margin-bottom:6px;
-  border:none;border-radius:8px;
-  background:transparent;text-align:left;cursor:pointer
+  border:none;border-radius:8px;background:transparent;
+  text-align:left;cursor:pointer
 }
 nav button:hover{background:#f3f4f6}
 main{flex:1;padding:24px}
 .card{
-  background:#fff;border-radius:14px;
-  padding:20px;margin-bottom:20px;
+  background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;
   box-shadow:0 8px 20px rgba(0,0,0,.04)
 }
-h2{margin-top:0}
-label{font-size:13px;color:#6b7280}
-input,select,textarea{
-  width:100%;padding:10px;margin-top:4px;margin-bottom:14px;
+input,textarea,select{
+  width:100%;padding:10px;margin-bottom:12px;
   border-radius:10px;border:1px solid #d1d5db
 }
 button.primary{
-  background:#2563eb;color:#fff;
-  border:none;padding:10px 16px;
-  border-radius:10px;cursor:pointer
+  background:#2563eb;color:#fff;border:none;
+  padding:10px 16px;border-radius:10px;cursor:pointer
 }
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left}
+th,td{padding:10px;border-bottom:1px solid #e5e7eb}
 tr:hover{background:#f9fafb;cursor:pointer}
-.badge{
-  padding:4px 10px;border-radius:999px;font-size:12px;
-  background:#e5e7eb
-}
+.badge{padding:4px 10px;border-radius:999px;background:#e5e7eb;font-size:12px}
 </style>
 </head>
 
@@ -59,10 +51,11 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <header>
   <span>EMR Klinik H. Dudi <small>(DEMO)</small></span>
-  <select id="roleSwitch" onchange="setRole(this.value)">
+  <select onchange="setRole(this.value)">
     <option value="">Pilih Role</option>
     <option value="pendaftaran">Pendaftaran</option>
     <option value="perawat">Perawat</option>
+    <option value="dokter">Dokter</option>
   </select>
 </header>
 
@@ -71,61 +64,54 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <main>
 
-<!-- DASHBOARD -->
 <div id="dashboard" class="card">
   <h2>Dashboard</h2>
-  <p>Silakan pilih role untuk memulai</p>
+  <p>Pilih role untuk mulai</p>
 </div>
 
 <!-- PENDAFTARAN -->
 <div id="pendaftaran" class="card hidden">
-  <h2>Pendaftaran Pasien</h2>
-
-  <label>Jenis Pasien</label>
+  <h2>Pendaftaran</h2>
   <select id="jenisPasien">
     <option value="baru">Pasien Baru</option>
-    <option value="lama">Pasien Pernah Berobat</option>
+    <option value="lama">Pasien Lama</option>
   </select>
-
-  <label>Nama Pasien</label>
-  <input id="namaPasien">
-
-  <label>No. RM (untuk pasien lama)</label>
-  <input id="noRM">
-
-  <button class="primary" onclick="daftarPasien()">Simpan Pendaftaran</button>
+  <input id="namaPasien" placeholder="Nama Pasien">
+  <input id="noRM" placeholder="No RM (jika lama)">
+  <button class="primary" onclick="daftarPasien()">Simpan</button>
 </div>
 
 <!-- PERAWAT -->
 <div id="perawat" class="card hidden">
-  <h2>Pasien Terdaftar Hari Ini</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Antrian</th>
-        <th>Nama</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="tabelPasien"></tbody>
-  </table>
+  <h2>Perawat</h2>
+  <table><tbody id="tabelPerawat"></tbody></table>
 </div>
 
-<!-- ANAMNESA -->
 <div id="anamnesa" class="card hidden">
-  <h2>Input Anamnesa</h2>
-  <p id="infoPasien"></p>
-
-  <label>Keluhan Utama</label>
-  <textarea id="keluhan"></textarea>
-
-  <label>TTV</label>
-  <input id="ttv" placeholder="TD / Nadi / RR / Suhu">
-
-  <label>Anamnesa Singkat</label>
-  <textarea id="anamnesaText"></textarea>
-
+  <h2>Anamnesa</h2>
+  <p id="infoPerawat"></p>
+  <textarea id="keluhan" placeholder="Keluhan"></textarea>
+  <input id="ttv" placeholder="TTV">
+  <textarea id="anamnesaText" placeholder="Catatan"></textarea>
   <button class="primary" onclick="simpanAnamnesa()">Simpan</button>
+</div>
+
+<!-- DOKTER -->
+<div id="dokter" class="card hidden">
+  <h2>Dokter</h2>
+  <table><tbody id="tabelDokter"></tbody></table>
+</div>
+
+<div id="soap" class="card hidden">
+  <h2>Pemeriksaan Dokter</h2>
+  <p id="infoDokter"></p>
+  <textarea id="S" placeholder="Subjective"></textarea>
+  <textarea id="O" placeholder="Objective"></textarea>
+  <textarea id="A" placeholder="Assessment"></textarea>
+  <textarea id="P" placeholder="Plan"></textarea>
+  <input id="diagnosis" placeholder="Diagnosis">
+  <textarea id="resep" placeholder="Resep / Tindakan"></textarea>
+  <button class="primary" onclick="simpanSOAP()">Selesai</button>
 </div>
 
 </main>
@@ -135,86 +121,61 @@ tr:hover{background:#f9fafb;cursor:pointer}
 firebase.initializeApp({
   databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
-const db = firebase.database();
+const db=firebase.database();
+let role='', pasienAktif=null;
 
-let role = '';
-let pasienAktif = null;
+function setRole(r){role=r;menu.innerHTML='';add('Dashboard','dashboard');
+if(r==='pendaftaran')add('Pendaftaran','pendaftaran');
+if(r==='perawat')add('Perawat','perawat');
+if(r==='dokter')add('Dokter','dokter');
+show('dashboard');}
 
-function setRole(r){
-  role = r;
-  buildMenu();
-  show('dashboard');
-}
+function add(l,i){let b=document.createElement('button');
+b.innerText=l;b.onclick=()=>show(i);menu.appendChild(b);}
+function show(i){document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+document.getElementById(i).classList.remove('hidden');}
 
-function buildMenu(){
-  menu.innerHTML='';
-  addMenu('Dashboard','dashboard');
-  if(role==='pendaftaran') addMenu('Pendaftaran','pendaftaran');
-  if(role==='perawat') addMenu('Perawat','perawat');
-}
-
-function addMenu(label,id){
-  const b=document.createElement('button');
-  b.innerText=label;
-  b.onclick=()=>show(id);
-  menu.appendChild(b);
-}
-
-function show(id){
-  document.querySelectorAll('main .card').forEach(c=>c.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-
-/* ================= PENDAFTARAN ================= */
+/* PENDAFTARAN */
 function daftarPasien(){
-  const nama = namaPasien.value;
-  const jenis = jenisPasien.value;
-  const rm = jenis==='baru' ? 'RM'+Date.now() : noRM.value;
-  const antrian = 'A'+Math.floor(Math.random()*900+100);
-
-  const data = {
-    nama, rm, antrian,
-    status:'menunggu_perawat',
-    waktu:new Date().toLocaleString()
-  };
-
-  db.ref('kunjungan_hari_ini').push(data);
-  db.ref('pasien/'+rm).set({nama, rm});
-
-  alert('Pasien terdaftar');
-  namaPasien.value=''; noRM.value='';
+let rm=jenisPasien.value==='baru'?'RM'+Date.now():noRM.value;
+let data={nama:namaPasien.value,rm,antrian:'A'+Math.floor(Math.random()*900),
+status:'menunggu_perawat'};
+db.ref('kunjungan_hari_ini').push(data);alert('Terdaftar');
 }
 
-/* ================= PERAWAT ================= */
-db.ref('kunjungan_hari_ini').on('value',snap=>{
-  tabelPasien.innerHTML='';
-  snap.forEach(c=>{
-    const d=c.val();
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${d.antrian}</td>
-      <td>${d.nama}</td>
-      <td><span class="badge">${d.status}</span></td>
-    `;
-    if(role==='perawat' && d.status==='menunggu_perawat'){
-      tr.onclick=()=>{
-        pasienAktif={key:c.key,data:d};
-        infoPasien.innerText=`${d.nama} (${d.antrian})`;
-        show('anamnesa');
-      }
-    }
-    tabelPasien.appendChild(tr);
-  });
+/* LISTENER */
+db.ref('kunjungan_hari_ini').on('value',s=>{
+tabelPerawat.innerHTML='';tabelDokter.innerHTML='';
+s.forEach(c=>{
+let d=c.val();
+if(d.status==='menunggu_perawat'){
+let r=document.createElement('tr');
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
+r.onclick=()=>{pasienAktif={k:c.key,d};infoPerawat.innerText=d.nama;show('anamnesa');};
+tabelPerawat.appendChild(r);
+}
+if(d.status==='menunggu_dokter'){
+let r=document.createElement('tr');
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
+r.onclick=()=>{pasienAktif={k:c.key,d};infoDokter.innerText=d.nama;show('soap');};
+tabelDokter.appendChild(r);
+}
+});
 });
 
+/* SIMPAN */
 function simpanAnamnesa(){
-  db.ref('kunjungan_hari_ini/'+pasienAktif.key+'/anamnesa').set({
-    keluhan:keluhan.value,
-    ttv:ttv.value,
-    catatan:anamnesaText.value
-  });
-  db.ref('kunjungan_hari_ini/'+pasienAktif.key+'/status').set('menunggu_dokter');
-  show('perawat');
+db.ref(`kunjungan_hari_ini/${pasienAktif.k}/anamnesa`).set({
+keluhan:keluhan.value,ttv:ttv.value,catatan:anamnesaText.value});
+db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('menunggu_dokter');
+show('perawat');
+}
+function simpanSOAP(){
+db.ref(`kunjungan_hari_ini/${pasienAktif.k}`).update({
+soap:{S:S.value,O:O.value,A:A.value,P:P.value},
+diagnosis:diagnosis.value,resep:resep.value,status:'selesai_dokter'
+});
+show('dokter');
 }
 </script>
 
