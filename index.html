@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EMR Klinik H. Dudi – DEMO</title>
+<title>EMR Klinik H. Dudi – DEMO RS</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -19,9 +19,7 @@ header{
   padding:0 20px;font-weight:600
 }
 .app{display:flex;min-height:calc(100vh - 56px)}
-nav{
-  width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px
-}
+nav{width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px}
 nav button{
   width:100%;padding:10px;margin-bottom:6px;
   border:none;border-radius:8px;background:transparent;
@@ -33,36 +31,25 @@ main{flex:1;padding:24px}
   background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;
   box-shadow:0 8px 20px rgba(0,0,0,.04)
 }
-.stat{
-  display:flex;gap:20px;margin-bottom:20px
-}
-.stat div{
-  flex:1;background:#f1f5f9;border-radius:12px;
-  padding:16px;text-align:center
-}
-.stat b{font-size:28px;display:block}
 input,textarea,select{
-  width:100%;padding:10px;margin-bottom:12px;
+  width:100%;padding:10px;margin-bottom:10px;
   border-radius:10px;border:1px solid #d1d5db
 }
 button.primary{
   background:#2563eb;color:#fff;border:none;
   padding:10px 16px;border-radius:10px;cursor:pointer
 }
-button.success{
-  background:#16a34a;color:#fff;border:none;
-  padding:8px 14px;border-radius:10px;cursor:pointer
-}
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #e5e7eb}
+td{padding:10px;border-bottom:1px solid #e5e7eb}
 tr:hover{background:#f9fafb;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <span>EMR Klinik H. Dudi <small>(DEMO)</small></span>
+  <span>EMR Klinik H. Dudi <small>(DEMO RS)</small></span>
   <select onchange="setRole(this.value)">
     <option value="">Pilih Role</option>
     <option value="dashboard">Dashboard</option>
@@ -76,102 +63,85 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <div class="app">
 <nav id="menu"></nav>
-
 <main>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="card">
-  <h2>Dashboard Kunjungan</h2>
-  <div class="stat">
-    <div><b id="totalKunjungan">0</b>Total</div>
-    <div><b id="menunggu">0</b>Menunggu</div>
-    <div><b id="selesai">0</b>Selesai</div>
-  </div>
-  <canvas id="grafikKunjungan" height="120"></canvas>
+<h2>Dashboard</h2>
+<canvas id="grafikKunjungan" height="120"></canvas>
 </div>
 
-<!-- PENDAFTARAN RS -->
+<!-- PENDAFTARAN -->
 <div id="pendaftaran" class="card hidden">
-  <h2>Pendaftaran Rekam Medis</h2>
-
-  <h4>Identitas Pasien</h4>
-  <input id="noRM" placeholder="No RM (kosongkan jika baru)">
-  <input id="namaPasien" placeholder="Nama Lengkap">
-  <input id="nik" placeholder="NIK">
-  <select id="jk">
-    <option value="">Jenis Kelamin</option>
-    <option>Laki-laki</option>
-    <option>Perempuan</option>
-  </select>
-  <input id="tglLahir" type="date">
-  <input id="usia" placeholder="Usia">
-  <input id="alamat" placeholder="Alamat">
-  <input id="telp" placeholder="No. Telp">
-
-  <h4>Administrasi</h4>
-  <select id="jenisPasien">
-    <option value="">Jenis Pasien</option>
-    <option>Umum</option>
-    <option>BPJS</option>
-    <option>Asuransi</option>
-  </select>
-  <input id="noBPJS" placeholder="No BPJS / Asuransi">
-  <select id="poli">
-    <option value="">Poli Tujuan</option>
-    <option>Umum</option>
-    <option>Gigi</option>
-    <option>KIA</option>
-  </select>
-
-  <button class="primary" onclick="daftarPasien()">Daftarkan Pasien</button>
+<h2>Pendaftaran Rekam Medis</h2>
+<input id="namaPasien" placeholder="Nama Pasien">
+<button class="primary" onclick="daftarPasien()">Daftarkan</button>
 </div>
 
 <!-- PERAWAT -->
 <div id="perawat" class="card hidden">
-  <h2>Perawat</h2>
-  <table><tbody id="tabelPerawat"></tbody></table>
+<h2>Daftar Pasien Perawat</h2>
+<table><tbody id="tabelPerawat"></tbody></table>
 </div>
 
+<!-- 🔥 ANAMNESA RS -->
 <div id="anamnesa" class="card hidden">
-  <h2>Anamnesa</h2>
-  <p id="infoPerawat"></p>
-  <textarea id="keluhan" placeholder="Keluhan"></textarea>
-  <input id="ttv" placeholder="TTV">
-  <button class="primary" onclick="simpanAnamnesa()">Simpan</button>
+<h2>Anamnesa Keperawatan (RS)</h2>
+<p><b id="infoPerawat"></b></p>
+
+<textarea id="keluhan" placeholder="Keluhan Utama"></textarea>
+<textarea id="rps" placeholder="Riwayat Penyakit Sekarang"></textarea>
+<textarea id="rpd" placeholder="Riwayat Penyakit Dahulu"></textarea>
+<input id="alergi" placeholder="Riwayat Alergi">
+
+<select id="kesadaran">
+  <option value="">Kesadaran</option>
+  <option>Compos Mentis</option>
+  <option>Apatis</option>
+  <option>Somnolen</option>
+  <option>Sopor</option>
+  <option>Koma</option>
+</select>
+
+<div class="grid">
+<input id="td" placeholder="TD (mmHg)">
+<input id="nadi" placeholder="Nadi (x/menit)">
+<input id="rr" placeholder="RR (x/menit)">
+<input id="suhu" placeholder="Suhu (°C)">
+<input id="spo2" placeholder="SpO₂ (%)">
+<input id="bbtb" placeholder="BB / TB">
+</div>
+
+<textarea id="catatanPerawat" placeholder="Catatan Perawat"></textarea>
+
+<button class="primary" onclick="simpanAnamnesa()">Simpan Anamnesa</button>
 </div>
 
 <!-- DOKTER -->
 <div id="dokter" class="card hidden">
-  <h2>Dokter</h2>
-  <table><tbody id="tabelDokter"></tbody></table>
+<h2>Dokter</h2>
+<table><tbody id="tabelDokter"></tbody></table>
 </div>
 
 <div id="soap" class="card hidden">
-  <h2>Pemeriksaan Dokter</h2>
-  <p id="infoDokter"></p>
-  <textarea id="diagnosis" placeholder="Diagnosis"></textarea>
-  <textarea id="resep" placeholder="Resep"></textarea>
-  <button class="primary" onclick="simpanSOAP()">Simpan</button>
+<h2>SOAP Dokter</h2>
+<p id="infoDokter"></p>
+<textarea id="diagnosis" placeholder="Diagnosis"></textarea>
+<textarea id="resep" placeholder="Resep"></textarea>
+<button class="primary" onclick="simpanSOAP()">Simpan</button>
 </div>
 
 <!-- FARMASI -->
 <div id="farmasi" class="card hidden">
-  <h2>Farmasi</h2>
-  <table><tbody id="tabelFarmasi"></tbody></table>
-</div>
-
-<div id="detailFarmasi" class="card hidden">
-  <h2>Penyerahan Obat</h2>
-  <p id="infoFarmasi"></p>
-  <textarea id="resepFarmasi" readonly></textarea>
-  <button class="success" onclick="selesaiFarmasi()">Obat Diserahkan</button>
+<h2>Farmasi</h2>
+<table><tbody id="tabelFarmasi"></tbody></table>
 </div>
 
 <!-- TV -->
 <div id="tv" class="card hidden" style="text-align:center">
-  <h1 style="font-size:48px">ANTRIAN</h1>
-  <div id="tvNomor" style="font-size:120px;font-weight:800">-</div>
-  <div id="tvNama" style="font-size:36px">Menunggu</div>
+<h1 style="font-size:48px">ANTRIAN</h1>
+<div id="tvNomor" style="font-size:120px;font-weight:800">-</div>
+<div id="tvNama" style="font-size:36px"></div>
 </div>
 
 </main>
@@ -179,96 +149,87 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <script>
 firebase.initializeApp({
-  databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
+databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 const db=firebase.database();
-let pasienAktif=null, terakhirDipanggil=null, chart=null;
+let pasienAktif=null;
 
 function setRole(r){
 menu.innerHTML='';
-add('Dashboard','dashboard');
-if(r)add(r.charAt(0).toUpperCase()+r.slice(1),r);
-show('dashboard');
-}
-function add(l,i){
+['dashboard',r].forEach(i=>{
+if(!i)return;
 let b=document.createElement('button');
-b.innerText=l;b.onclick=()=>show(i);menu.appendChild(b);
+b.innerText=i.toUpperCase();
+b.onclick=()=>show(i);
+menu.appendChild(b);
+});
+show(r||'dashboard');
 }
 function show(i){
 document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
 document.getElementById(i).classList.remove('hidden');
 }
 
-function generateRM(){return 'RM'+Date.now().toString().slice(-6);}
-
 function daftarPasien(){
-const rm=noRM.value||generateRM();
-const antrian='A'+Math.floor(Math.random()*900);
-db.ref('kunjungan_hari_ini').push({
-rm,nama:namaPasien.value,nik:nik.value,jk:jk.value,
-tgl_lahir:tglLahir.value,usia:usia.value,alamat:alamat.value,telp:telp.value,
-jenis_pasien:jenisPasien.value,no_bpjs:noBPJS.value,poli:poli.value,
-antrian,status:'menunggu_perawat',waktu:new Date().toISOString()
+db.ref('kunjungan').push({
+nama:namaPasien.value,
+antrian:'A'+Math.floor(Math.random()*900),
+status:'menunggu_perawat'
 });
-alert(`Terdaftar\nRM:${rm}\nAntrian:${antrian}`);
-show('dashboard');
+alert('Pasien terdaftar');
 }
 
-db.ref('kunjungan_hari_ini').on('value',s=>{
-let stat={mp:0,md:0,sd:0,sf:0};
-tabelPerawat.innerHTML=tabelDokter.innerHTML=tabelFarmasi.innerHTML='';
+db.ref('kunjungan').on('value',s=>{
+tabelPerawat.innerHTML=tabelDokter.innerHTML='';
 s.forEach(c=>{
 let d=c.val();
-if(d.status==='menunggu_perawat'){stat.mp++;
+if(d.status==='menunggu_perawat'){
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key};infoPerawat.innerText=d.nama;show('anamnesa')};
-tabelPerawat.appendChild(r);}
-if(d.status==='menunggu_dokter'){stat.md++;
-let r=document.createElement('tr');
-r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key};infoDokter.innerText=d.nama;show('soap')};
-tabelDokter.appendChild(r);}
-if(d.status==='selesai_dokter'){stat.sd++;
-let r=document.createElement('tr');
-r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-tabelFarmasi.appendChild(r);}
-if(d.dipanggil&&terakhirDipanggil!==c.key){
-terakhirDipanggil=c.key;
-tvNomor.innerText=d.antrian;tvNama.innerText=d.nama;
-speechSynthesis.speak(new SpeechSynthesisUtterance(
-`Nomor antrian ${d.antrian} atas nama ${d.nama}`
-));}
-});
-totalKunjungan.innerText=s.size;
-menunggu.innerText=stat.mp+stat.md;
-selesai.innerText=stat.sf;
-updateChart(stat);
-});
-
-function updateChart(s){
-if(chart)chart.destroy();
-chart=new Chart(grafikKunjungan,{
-type:'bar',
-data:{labels:['Perawat','Dokter','Selesai Dokter','Farmasi'],
-datasets:[{data:[s.mp,s.md,s.sd,s.sf]}]},
-options:{plugins:{legend:{display:false}}}
-});
+r.onclick=()=>{
+pasienAktif=c.key;
+infoPerawat.innerText=d.nama;
+show('anamnesa');
+};
+tabelPerawat.appendChild(r);
 }
+if(d.status==='menunggu_dokter'){
+let r=document.createElement('tr');
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
+r.onclick=()=>{
+pasienAktif=c.key;
+infoDokter.innerText=d.nama;
+show('soap');
+};
+tabelDokter.appendChild(r);
+}
+});
+});
 
 function simpanAnamnesa(){
-db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('menunggu_dokter');
+db.ref('kunjungan/'+pasienAktif).update({
+anamnesa:{
+keluhan:keluhan.value,
+rps:rps.value,
+rpd:rpd.value,
+alergi:alergi.value,
+kesadaran:kesadaran.value,
+ttv:{td:td.value,nadi:nadi.value,rr:rr.value,suhu:suhu.value,spo2:spo2.value},
+bbtb:bbtb.value,
+catatan:catatanPerawat.value
+},
+status:'menunggu_dokter'
+});
 show('perawat');
 }
+
 function simpanSOAP(){
-db.ref(`kunjungan_hari_ini/${pasienAktif.k}`).update({
-diagnosis:diagnosis.value,resep:resep.value,status:'selesai_dokter'
+db.ref('kunjungan/'+pasienAktif).update({
+diagnosis:diagnosis.value,
+resep:resep.value,
+status:'farmasi'
 });
 show('dokter');
-}
-function selesaiFarmasi(){
-db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('selesai_farmasi');
-show('farmasi');
 }
 </script>
 
