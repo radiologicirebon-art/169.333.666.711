@@ -3,190 +3,100 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EMR Klinik Modern</title>
+<title>EMR Klinik Modern - DEMO</title>
 
-<!-- =====================================================
-  EMR KLINIK MODERN
-  Filosofi:
-  - CLEAN UI (putih, ringan, fokus kerja)
-  - CEPAT (minim klik, minim distraksi)
-  - ENAK DIPAKAI (alur klinis nyata)
-  - BUKAN DEMO, BUKAN TEMPLATE
-====================================================== -->
-
-<!-- FIREBASE -->
+<!-- FIREBASE (DATABASE ONLY) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-/* ================= RESET ================= */
-* { box-sizing: border-box; font-family: 'Inter', Arial, sans-serif; }
-body { margin:0; background:#f9fafb; color:#111827; }
-.hidden { display:none; }
+*{box-sizing:border-box;font-family:Inter,Arial,sans-serif}
+body{margin:0;background:#f9fafb;color:#111827}
+.hidden{display:none}
 
-/* ================= LAYOUT ================= */
-header {
-  height:56px;
-  background:#ffffff;
-  border-bottom:1px solid #e5e7eb;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  font-weight:600;
+header{
+  height:56px;background:#fff;border-bottom:1px solid #e5e7eb;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-weight:600
 }
-
-.app {
-  display:flex;
-  min-height:calc(100vh - 56px);
+.app{display:flex;min-height:calc(100vh - 56px)}
+nav{
+  width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px
 }
-
-nav {
-  width:220px;
-  background:#ffffff;
-  border-right:1px solid #e5e7eb;
-  padding:12px;
+nav button{
+  width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;
+  border-radius:8px;border:none;background:transparent;cursor:pointer
 }
-
-nav button {
-  width:100%;
-  text-align:left;
-  padding:10px 12px;
-  margin-bottom:6px;
-  border-radius:8px;
-  border:none;
-  background:transparent;
-  cursor:pointer;
+nav button:hover{background:#f3f4f6}
+main{flex:1;padding:24px}
+.card{
+  background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;
+  box-shadow:0 8px 20px rgba(0,0,0,.04)
 }
-nav button:hover { background:#f3f4f6; }
-
-main {
-  flex:1;
-  padding:24px;
+h2{margin:0 0 12px;font-size:18px}
+label{font-size:13px;color:#6b7280}
+input,textarea,select{
+  width:100%;padding:10px 12px;margin-top:4px;margin-bottom:14px;
+  border-radius:10px;border:1px solid #d1d5db
 }
-
-.card {
-  background:#ffffff;
-  border-radius:14px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.04);
+button.primary{
+  background:#2563eb;color:#fff;border:none;
+  padding:10px 16px;border-radius:10px;cursor:pointer
 }
-
-h2 { margin:0 0 12px; font-size:18px; }
-label { font-size:13px; color:#6b7280; }
-input, textarea, select {
-  width:100%;
-  padding:10px 12px;
-  margin-top:4px;
-  margin-bottom:14px;
-  border-radius:10px;
-  border:1px solid #d1d5db;
+.list{display:flex;flex-direction:column;gap:8px}
+.item{
+  padding:12px;border:1px solid #e5e7eb;border-radius:10px;
+  display:flex;justify-content:space-between;align-items:center
 }
-button.primary {
-  background:#2563eb;
-  color:white;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-  cursor:pointer;
-}
-button.danger {
-  background:#ef4444;
-  color:white;
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
-}
-
-.list {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.item {
-  padding:12px;
-  border:1px solid #e5e7eb;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.badge {
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-}
-.badge.hijau { background:#dcfce7; color:#166534; }
-.badge.kuning { background:#fef9c3; color:#854d0e; }
-.badge.merah { background:#fee2e2; color:#991b1b; }
-</style>
-<!-- ================= PWA META ================= -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2563eb">
-
-<style>
-/* ================= MICRO INTERACTIONS ================= */
-.card{transition:transform .15s ease, box-shadow .15s ease}
-.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.08)}
-button.primary{transition:background .15s ease, transform .1s ease}
-button.primary:active{transform:scale(.97)}
+.badge{padding:4px 10px;border-radius:999px;font-size:12px}
+.hijau{background:#dcfce7;color:#166534}
+.kuning{background:#fef9c3;color:#854d0e}
+.merah{background:#fee2e2;color:#991b1b}
 </style>
 </head>
+
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div id="login" class="card" style="max-width:380px;margin:120px auto">
-  <h2>Login EMR Klinik</h2>
-  <input id="email" placeholder="Email" />
-  <input id="password" type="password" placeholder="Password" />
-  <button class="primary" onclick="login()">Masuk</button>
-</div>
-
-<!-- ================= APP ================= -->
-<div id="app" class="hidden">
 <header>
-  <span id="appTitle">EMR Klinik</span>
-  <button class="danger" onclick="logout()">Logout</button>
+  <span>EMR Klinik Modern <small style="color:#6b7280">(DEMO)</small></span>
+  <select id="roleSwitch" onchange="setRole(this.value)">
+    <option value="">Pilih Role</option>
+    <option value="perawat">Perawat</option>
+    <option value="dokter">Dokter</option>
+    <option value="farmasi">Farmasi</option>
+  </select>
 </header>
 
 <div class="app">
-
 <nav id="menu"></nav>
 
 <main>
 
-<!-- DASHBOARD -->
 <div id="dashboard" class="card">
   <h2>Dashboard</h2>
-  <p style="color:#6b7280">Ringkasan aktivitas hari ini</p>
+  <p style="color:#6b7280">Mode Demo tanpa login</p>
 </div>
 
-<!-- TRIAGE -->
 <div id="triase" class="card hidden">
   <h2>Triase Pasien</h2>
   <label>Nama Pasien</label>
-  <input id="tNama" />
+  <input id="tNama">
   <label>Kategori</label>
   <select id="tKategori">
     <option value="hijau">Hijau</option>
     <option value="kuning">Kuning</option>
     <option value="merah">Merah</option>
   </select>
-  <label>Keluhan Utama</label>
+  <label>Keluhan</label>
   <textarea id="tKeluhan"></textarea>
   <button class="primary" onclick="simpanTriase()">Simpan</button>
 </div>
 
-<!-- ANTRIAN DOKTER -->
 <div id="antrian" class="card hidden">
   <h2>Antrian Dokter</h2>
   <div id="listAntrian" class="list"></div>
 </div>
 
-<!-- SOAP -->
 <div id="soap" class="card hidden">
   <h2>SOAP</h2>
   <textarea id="sS" placeholder="Subjective"></textarea>
@@ -196,7 +106,6 @@ button.primary:active{transform:scale(.97)}
   <button class="primary" onclick="simpanSOAP()">Selesaikan</button>
 </div>
 
-<!-- FARMASI -->
 <div id="farmasi" class="card hidden">
   <h2>Farmasi</h2>
   <div id="listResep" class="list"></div>
@@ -204,66 +113,35 @@ button.primary:active{transform:scale(.97)}
 
 </main>
 </div>
-</div>
 
 <script>
-/* ================= FIREBASE ================= */
 firebase.initializeApp({
-  apiKey: "AIzaSyAzUQ8QXpwBoqVf02v0dG3onWekhkA46Bg",
-  authDomain: "develop-program-erm.firebaseapp.com",
-  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "develop-program-erm",
-  storageBucket: "develop-program-erm.firebasestorage.app",
-  messagingSenderId: "135373847578",
-  appId: "1:135373847578:web:12ebdc802cb9176e82e5a3",
-  measurementId: "G-B6TTRC25ND"
+  databaseURL: "https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
-
-const auth = firebase.auth();
 const db = firebase.database();
-let currentRole = null;
+
+let currentRole = '';
 let currentAntrian = null;
 
-/* ================= AUTH ================= */
-function login(){
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      // sukses → onAuthStateChanged akan handle UI
-    })
-    .catch(err => alert(err.message));
+function setRole(role){
+  currentRole = role;
+  buildMenu();
+  show('dashboard');
 }
 
-function logout(){ auth.signOut(); location.reload(); }
-
-/* ================= ROUTING ================= */
-auth.onAuthStateChanged(user => {
-  if(!user) return;
-  login.classList.add('hidden');
-  app.classList.remove('hidden');
-
-  db.ref('users/'+user.uid+'/role').once('value').then(snap => {
-    currentRole = snap.val();
-    buildMenu();
-  });
-});
-
 function buildMenu(){
-  menu.innerHTML = '';
+  menu.innerHTML='';
   addMenu('Dashboard','dashboard');
-
   if(currentRole==='perawat') addMenu('Triase','triase');
   if(currentRole==='dokter') addMenu('Antrian','antrian');
   if(currentRole==='farmasi') addMenu('Farmasi','farmasi');
 }
 
-function addMenu(label, target){
-  const btn = document.createElement('button');
-  btn.innerText = label;
-  btn.onclick = () => show(target);
-  menu.appendChild(btn);
+function addMenu(label,id){
+  const b=document.createElement('button');
+  b.innerText=label;
+  b.onclick=()=>show(id);
+  menu.appendChild(b);
 }
 
 function show(id){
@@ -271,33 +149,30 @@ function show(id){
   document.getElementById(id).classList.remove('hidden');
 }
 
-/* ================= PERAWAT ================= */
 function simpanTriase(){
-  const data = {
-    nama: tNama.value,
-    kategori: tKategori.value,
-    keluhan: tKeluhan.value,
-    waktu: new Date().toLocaleString()
-  };
-  db.ref('antrian').push(data);
-  tNama.value=''; tKeluhan.value='';
+  db.ref('antrian').push({
+    nama:tNama.value,
+    kategori:tKategori.value,
+    keluhan:tKeluhan.value,
+    waktu:new Date().toLocaleString()
+  });
+  tNama.value='';tKeluhan.value='';
   alert('Triase tersimpan');
 }
 
-/* ================= DOKTER ================= */
-db.ref('antrian').on('value', snap => {
+db.ref('antrian').on('value',snap=>{
   listAntrian.innerHTML='';
   snap.forEach(c=>{
-    const d = c.val();
-    const div = document.createElement('div');
+    const d=c.val();
+    const div=document.createElement('div');
     div.className='item';
-    div.innerHTML = `<div><b>${d.nama}</b><br><span class="badge ${d.kategori}">${d.kategori}</span></div>`;
+    div.innerHTML=`<div><b>${d.nama}</b><br><span class="badge ${d.kategori}">${d.kategori}</span></div>`;
     if(currentRole==='dokter'){
-      const btn = document.createElement('button');
-      btn.className='primary';
-      btn.innerText='Periksa';
-      btn.onclick=()=>{ currentAntrian=c.key; show('soap'); };
-      div.appendChild(btn);
+      const b=document.createElement('button');
+      b.className='primary';
+      b.innerText='Periksa';
+      b.onclick=()=>{currentAntrian=c.key;show('soap')};
+      div.appendChild(b);
     }
     listAntrian.appendChild(div);
   });
@@ -311,17 +186,7 @@ function simpanSOAP(){
   db.ref('antrian/'+currentAntrian).remove();
   show('antrian');
 }
-
-/* ================= FARMASI ================= */
-db.ref('resep').on('value', snap => {
-  listResep.innerHTML='';
-  snap.forEach(c=>{
-    const li = document.createElement('div');
-    li.className='item';
-    li.innerText=c.val().obat;
-    listResep.appendChild(li);
-  });
-});
 </script>
+
 </body>
 </html>
