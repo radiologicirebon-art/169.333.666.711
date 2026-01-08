@@ -82,21 +82,48 @@ tr:hover{background:#f9fafb;cursor:pointer}
 <!-- DASHBOARD -->
 <div id="dashboard" class="card">
   <h2>Dashboard Kunjungan</h2>
-
   <div class="stat">
-    <div><b id="totalKunjungan">0</b>Total Kunjungan</div>
+    <div><b id="totalKunjungan">0</b>Total</div>
     <div><b id="menunggu">0</b>Menunggu</div>
     <div><b id="selesai">0</b>Selesai</div>
   </div>
-
   <canvas id="grafikKunjungan" height="120"></canvas>
 </div>
 
-<!-- PENDAFTARAN -->
+<!-- PENDAFTARAN RS -->
 <div id="pendaftaran" class="card hidden">
-  <h2>Pendaftaran</h2>
-  <input id="namaPasien" placeholder="Nama Pasien">
-  <button class="primary" onclick="daftarPasien()">Simpan</button>
+  <h2>Pendaftaran Rekam Medis</h2>
+
+  <h4>Identitas Pasien</h4>
+  <input id="noRM" placeholder="No RM (kosongkan jika baru)">
+  <input id="namaPasien" placeholder="Nama Lengkap">
+  <input id="nik" placeholder="NIK">
+  <select id="jk">
+    <option value="">Jenis Kelamin</option>
+    <option>Laki-laki</option>
+    <option>Perempuan</option>
+  </select>
+  <input id="tglLahir" type="date">
+  <input id="usia" placeholder="Usia">
+  <input id="alamat" placeholder="Alamat">
+  <input id="telp" placeholder="No. Telp">
+
+  <h4>Administrasi</h4>
+  <select id="jenisPasien">
+    <option value="">Jenis Pasien</option>
+    <option>Umum</option>
+    <option>BPJS</option>
+    <option>Asuransi</option>
+  </select>
+  <input id="noBPJS" placeholder="No BPJS / Asuransi">
+  <select id="poli">
+    <option value="">Poli Tujuan</option>
+    <option>Umum</option>
+    <option>Gigi</option>
+    <option>KIA</option>
+  </select>
+
+  <button class="primary" onclick="daftarPasien()">Daftarkan Pasien</button>
 </div>
 
 <!-- PERAWAT -->
@@ -155,18 +182,12 @@ firebase.initializeApp({
   databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 const db=firebase.database();
-let pasienAktif=null;
-let terakhirDipanggil=null;
-let chart=null;
+let pasienAktif=null, terakhirDipanggil=null, chart=null;
 
 function setRole(r){
 menu.innerHTML='';
 add('Dashboard','dashboard');
-if(r==='pendaftaran')add('Pendaftaran','pendaftaran');
-if(r==='perawat')add('Perawat','perawat');
-if(r==='dokter')add('Dokter','dokter');
-if(r==='farmasi')add('Farmasi','farmasi');
-if(r==='tv')add('TV Antrian','tv');
+if(r)add(r.charAt(0).toUpperCase()+r.slice(1),r);
 show('dashboard');
 }
 function add(l,i){
@@ -178,97 +199,59 @@ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
 document.getElementById(i).classList.remove('hidden');
 }
 
+function generateRM(){return 'RM'+Date.now().toString().slice(-6);}
+
 function daftarPasien(){
+const rm=noRM.value||generateRM();
+const antrian='A'+Math.floor(Math.random()*900);
 db.ref('kunjungan_hari_ini').push({
-nama:namaPasien.value,
-antrian:'A'+Math.floor(Math.random()*900),
-status:'menunggu_perawat'
+rm,nama:namaPasien.value,nik:nik.value,jk:jk.value,
+tgl_lahir:tglLahir.value,usia:usia.value,alamat:alamat.value,telp:telp.value,
+jenis_pasien:jenisPasien.value,no_bpjs:noBPJS.value,poli:poli.value,
+antrian,status:'menunggu_perawat',waktu:new Date().toISOString()
 });
+alert(`Terdaftar\nRM:${rm}\nAntrian:${antrian}`);
+show('dashboard');
 }
 
-function panggilSuara(no,nama){
-const u=new SpeechSynthesisUtterance(
-`Nomor antrian ${no}, atas nama ${nama}, silakan menuju ruang pelayanan`
-);
-u.lang='id-ID';u.rate=0.9;
-speechSynthesis.cancel();
-speechSynthesis.speak(u);
-}
-
-/* LISTENER + DASHBOARD */
 db.ref('kunjungan_hari_ini').on('value',s=>{
-let stat={
-menunggu_perawat:0,
-menunggu_dokter:0,
-selesai_dokter:0,
-selesai_farmasi:0
-};
-
-tabelPerawat.innerHTML='';
-tabelDokter.innerHTML='';
-tabelFarmasi.innerHTML='';
-
+let stat={mp:0,md:0,sd:0,sf:0};
+tabelPerawat.innerHTML=tabelDokter.innerHTML=tabelFarmasi.innerHTML='';
 s.forEach(c=>{
 let d=c.val();
-stat[d.status]=(stat[d.status]||0)+1;
-
-if(d.status==='menunggu_perawat'){
+if(d.status==='menunggu_perawat'){stat.mp++;
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key,d};infoPerawat.innerText=d.nama;show('anamnesa');};
-tabelPerawat.appendChild(r);
-}
-
-if(d.status==='menunggu_dokter'){
+r.onclick=()=>{pasienAktif={k:c.key};infoPerawat.innerText=d.nama;show('anamnesa')};
+tabelPerawat.appendChild(r);}
+if(d.status==='menunggu_dokter'){stat.md++;
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key,d};infoDokter.innerText=d.nama;show('soap');};
-tabelDokter.appendChild(r);
-}
-
-if(d.status==='selesai_dokter'){
+r.onclick=()=>{pasienAktif={k:c.key};infoDokter.innerText=d.nama;show('soap')};
+tabelDokter.appendChild(r);}
+if(d.status==='selesai_dokter'){stat.sd++;
 let r=document.createElement('tr');
-r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>
-<td><button class="success" onclick="
-db.ref('kunjungan_hari_ini/${c.key}').update({dipanggil:true})
-">Panggil</button></td>`;
-r.onclick=()=>{pasienAktif={k:c.key,d};
-infoFarmasi.innerText=d.nama;
-resepFarmasi.value=d.resep;
-show('detailFarmasi');};
-tabelFarmasi.appendChild(r);
-}
-
-if(d.dipanggil && terakhirDipanggil!==c.key){
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
+tabelFarmasi.appendChild(r);}
+if(d.dipanggil&&terakhirDipanggil!==c.key){
 terakhirDipanggil=c.key;
-tvNomor.innerText=d.antrian;
-tvNama.innerText=d.nama;
-panggilSuara(d.antrian,d.nama);
-}
+tvNomor.innerText=d.antrian;tvNama.innerText=d.nama;
+speechSynthesis.speak(new SpeechSynthesisUtterance(
+`Nomor antrian ${d.antrian} atas nama ${d.nama}`
+));}
 });
-
-/* DASHBOARD */
 totalKunjungan.innerText=s.size;
-menunggu.innerText=stat.menunggu_perawat+stat.menunggu_dokter;
-selesai.innerText=stat.selesai_farmasi;
-
+menunggu.innerText=stat.mp+stat.md;
+selesai.innerText=stat.sf;
 updateChart(stat);
 });
 
-function updateChart(stat){
-const data=[
-stat.menunggu_perawat,
-stat.menunggu_dokter,
-stat.selesai_dokter,
-stat.selesai_farmasi
-];
+function updateChart(s){
 if(chart)chart.destroy();
-chart=new Chart(document.getElementById('grafikKunjungan'),{
+chart=new Chart(grafikKunjungan,{
 type:'bar',
-data:{
-labels:['Menunggu Perawat','Menunggu Dokter','Selesai Dokter','Selesai Farmasi'],
-datasets:[{data}]
-},
+data:{labels:['Perawat','Dokter','Selesai Dokter','Farmasi'],
+datasets:[{data:[s.mp,s.md,s.sd,s.sf]}]},
 options:{plugins:{legend:{display:false}}}
 });
 }
@@ -279,9 +262,7 @@ show('perawat');
 }
 function simpanSOAP(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}`).update({
-diagnosis:diagnosis.value,
-resep:resep.value,
-status:'selesai_dokter'
+diagnosis:diagnosis.value,resep:resep.value,status:'selesai_dokter'
 });
 show('dokter');
 }
