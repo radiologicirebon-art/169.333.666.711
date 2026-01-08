@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>EMR Klinik – Admin Panel</title>
+  <title>EMR Klinik – Admin Panel (FINAL v1)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- Firebase -->
@@ -12,24 +12,29 @@
 
   <style>
     body{margin:0;font-family:Arial;background:#f5f7fa}
-    header{background:#1e88e5;color:#fff;padding:15px}
+    header{background:#1e88e5;color:#fff;padding:12px 16px}
     .container{display:flex}
-    aside{width:220px;background:#263238;color:#fff;min-height:100vh}
+    aside{width:240px;background:#263238;color:#fff;min-height:100vh}
     aside a{display:block;color:#fff;text-decoration:none;padding:12px}
     aside a:hover{background:#37474f}
-    main{flex:1;padding:20px}
-    .card{background:#fff;padding:15px;border-radius:6px;margin-bottom:15px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+    main{flex:1;padding:16px}
+    .card{background:#fff;padding:12px;border-radius:6px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+    h3{margin:6px 0 10px}
+    h4{margin:10px 0 6px}
     table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #ddd;padding:8px}
+    th,td{border:1px solid #ddd;padding:6px;font-size:13px}
     th{background:#eee}
-    input,select,button{padding:6px;margin:3px}
+    input,select,button{padding:6px;margin:3px;font-size:13px}
     .hidden{display:none}
+    .row{display:flex;flex-wrap:wrap;gap:8px}
+    .col{flex:1;min-width:220px}
+    ul{padding-left:18px}
   </style>
 </head>
 <body>
 
 <header>
-  <b>EMR KLINIK – ADMIN PANEL</b>
+  <b>EMR KLINIK — ADMIN PANEL (FINAL v1)</b>
   <span style="float:right">
     <button onclick="logout()">Logout</button>
   </span>
@@ -37,83 +42,119 @@
 
 <div class="container">
   <aside>
-    <a href="#" onclick="show('dashboard')">📊 Dashboard</a>
-    <a href="#" onclick="show('dokter')">👨‍⚕️ Data Dokter</a>
-    <a href="#" onclick="show('poli')">🏥 Data Poli</a>
-    <a href="#" onclick="show('user')">👤 User</a>
-    <a href="#" onclick="show('kunjungan')">📋 Kunjungan</a>
-    <a href="#" onclick="show('log')">🕒 Log Aktivitas</a>
+    <a onclick="show('dashboard')">📊 Dashboard</a>
+    <a onclick="show('tarif')">💰 Manajemen Tarif</a>
+    <a onclick="show('laporan')">📑 Laporan</a>
+    <a onclick="show('keuangan')">💵 Keuangan</a>
+    <a onclick="show('antrian')">🟢 Antrian</a>
+    <a onclick="show('audit')">🛡️ Audit & Log</a>
+    <a onclick="show('master')">📚 Master Data</a>
   </aside>
 
   <main>
     <!-- DASHBOARD -->
     <div id="dashboard" class="card">
       <h3>Dashboard</h3>
-      <p>Total Dokter: <b id="jDokter">0</b></p>
-      <p>Total Poli: <b id="jPoli">0</b></p>
-      <p>Total User: <b id="jUser">0</b></p>
-      <p>Total Kunjungan: <b id="jKunjungan">0</b></p>
+      <div class="row">
+        <div class="col">Total Tindakan: <b id="jTindakan">0</b></div>
+        <div class="col">Total Radiologi: <b id="jRadio">0</b></div>
+        <div class="col">Total Paket: <b id="jPaket">0</b></div>
+        <div class="col">Total Kunjungan: <b id="jKunjungan">0</b></div>
+      </div>
     </div>
 
-    <!-- DOKTER -->
-    <div id="dokter" class="card hidden">
-      <h3>Data Dokter</h3>
-      <input id="dokterNama" placeholder="Nama Dokter">
-      <input id="dokterSpes" placeholder="Spesialis">
-      <button onclick="simpanDokter()">Simpan</button>
+    <!-- MANAGEMEN TARIF -->
+    <div id="tarif" class="card hidden">
+      <h3>Manajemen Tarif</h3>
+
+      <h4>Tarif Tindakan</h4>
+      <input id="tNama" placeholder="Nama Tindakan">
+      <input id="tHarga" type="number" placeholder="Harga">
+      <button onclick="simpanTarif('tindakan')">Simpan</button>
+      <ul id="listTindakan"></ul>
+
+      <h4>Tarif Radiologi</h4>
+      <input id="rNama" placeholder="Nama Pemeriksaan">
+      <input id="rHarga" type="number" placeholder="Harga">
+      <button onclick="simpanTarif('radiologi')">Simpan</button>
+      <ul id="listRadiologi"></ul>
+
+      <h4>Paket Layanan</h4>
+      <input id="pNama" placeholder="Nama Paket">
+      <input id="pHarga" type="number" placeholder="Harga">
+      <button onclick="simpanTarif('paket')">Simpan</button>
+      <ul id="listPaket"></ul>
+    </div>
+
+    <!-- LAPORAN -->
+    <div id="laporan" class="card hidden">
+      <h3>Laporan</h3>
+      <input type="date" id="dari">
+      <input type="date" id="sampai">
+      <button onclick="rekap()">Tampilkan</button>
+      <button onclick="exportExcel()">Export Excel</button>
       <table>
-        <thead><tr><th>Nama</th><th>Spesialis</th><th>Aksi</th></tr></thead>
-        <tbody id="listDokter"></tbody>
+        <thead><tr><th>Tgl</th><th>Pasien</th><th>Poli</th></tr></thead>
+        <tbody id="lapRekap"></tbody>
       </table>
     </div>
 
-    <!-- POLI -->
-    <div id="poli" class="card hidden">
-      <h3>Data Poli</h3>
-      <input id="poliNama" placeholder="Nama Poli">
-      <button onclick="simpanPoli()">Simpan</button>
-      <table>
-        <thead><tr><th>Nama Poli</th><th>Aksi</th></tr></thead>
-        <tbody id="listPoli"></tbody>
-      </table>
+    <!-- KEUANGAN -->
+    <div id="keuangan" class="card hidden">
+      <h3>Keuangan</h3>
+
+      <h4>Billing Pasien</h4>
+      <input id="bPasien" placeholder="Nama Pasien">
+      <input id="bTotal" type="number" placeholder="Total">
+      <button onclick="simpanBilling()">Simpan</button>
+
+      <h4>Rekap Pendapatan</h4>
+      <p>Total Hari Ini: <b id="totalHari">Rp0</b></p>
+
+      <h4>Piutang</h4>
+      <ul id="listPiutang"></ul>
     </div>
 
-    <!-- USER -->
-    <div id="user" class="card hidden">
-      <h3>User</h3>
-      <input id="userEmail" placeholder="Email">
-      <select id="userRole">
-        <option value="admin">Admin</option>
-        <option value="dokter">Dokter</option>
-        <option value="perawat">Perawat</option>
-        <option value="pendaftaran">Pendaftaran</option>
-      </select>
-      <button onclick="simpanUser()">Simpan</button>
-      <table>
-        <thead><tr><th>Email</th><th>Role</th></tr></thead>
-        <tbody id="listUser"></tbody>
-      </table>
+    <!-- ANTRIAN -->
+    <div id="antrian" class="card hidden">
+      <h3>Antrian</h3>
+      <button onclick="resetAntrian()">Reset Harian</button>
+      <ul id="listAntrian"></ul>
     </div>
 
-    <!-- KUNJUNGAN -->
-    <div id="kunjungan" class="card hidden">
-      <h3>Data Kunjungan</h3>
-      <table>
-        <thead><tr><th>Tanggal</th><th>Pasien</th><th>Poli</th></tr></thead>
-        <tbody id="listKunjungan"></tbody>
-      </table>
+    <!-- AUDIT -->
+    <div id="audit" class="card hidden">
+      <h3>Audit & Log</h3>
+      <ul id="auditLog"></ul>
     </div>
 
-    <!-- LOG -->
-    <div id="log" class="card hidden">
-      <h3>Log Aktivitas</h3>
-      <ul id="listLog"></ul>
+    <!-- MASTER DATA -->
+    <div id="master" class="card hidden">
+      <h3>Master Data</h3>
+
+      <h4>Diagnosa (ICD)</h4>
+      <input id="icdKode" placeholder="Kode">
+      <input id="icdNama" placeholder="Nama">
+      <button onclick="simpanMaster('icd')">Simpan</button>
+      <ul id="listICD"></ul>
+
+      <h4>Tindakan (ICD-9 CM)</h4>
+      <input id="icd9Kode" placeholder="Kode">
+      <input id="icd9Nama" placeholder="Nama">
+      <button onclick="simpanMaster('icd9')">Simpan</button>
+      <ul id="listICD9"></ul>
+
+      <h4>Obat / BHP</h4>
+      <input id="obatNama" placeholder="Nama">
+      <input id="obatStok" type="number" placeholder="Stok">
+      <button onclick="simpanMaster('obat')">Simpan</button>
+      <ul id="listOBAT"></ul>
     </div>
   </main>
 </div>
 
 <script>
-/* ================== FIREBASE CONFIG ================== */
+/* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
   apiKey: "ISI_API_KEY",
   authDomain: "ISI_AUTH_DOMAIN",
@@ -123,136 +164,164 @@ const firebaseConfig = {
   messagingSenderId: "ISI_SENDER_ID",
   appId: "ISI_APP_ID"
 };
-
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db   = firebase.database();
 
-/* ================== AUTH GUARD ================== */
+/* ================= AUTH GUARD ================= */
 auth.onAuthStateChanged(user=>{
   if(!user){ location.href="index.html"; return; }
-  db.ref("users/"+user.uid+"/role").once("value").then(s=>{
-    if(s.val()!=="admin"){
-      alert("Akses ditolak!");
-      auth.signOut();
-      location.href="index.html";
-    }
-  });
 });
 
-/* ================== NAV ================== */
+/* ================= NAV ================= */
 function show(id){
   document.querySelectorAll("main .card").forEach(c=>c.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
 
-/* ================== DASHBOARD ================== */
+/* ================= DASHBOARD ================= */
 function loadDashboard(){
-  db.ref("dokter").on("value",s=> jDokter.innerText = s.numChildren());
-  db.ref("poli").on("value",s=> jPoli.innerText = s.numChildren());
-  db.ref("users").on("value",s=> jUser.innerText = s.numChildren());
-  db.ref("kunjungan").on("value",s=> jKunjungan.innerText = s.numChildren());
+  db.ref("tarif/tindakan").on("value",s=> jTindakan.innerText=s.numChildren());
+  db.ref("tarif/radiologi").on("value",s=> jRadio.innerText=s.numChildren());
+  db.ref("tarif/paket").on("value",s=> jPaket.innerText=s.numChildren());
+  db.ref("kunjungan").on("value",s=> jKunjungan.innerText=s.numChildren());
 }
 loadDashboard();
 
-/* ================== DOKTER ================== */
-function simpanDokter(){
-  const nama = dokterNama.value;
-  const spes = dokterSpes.value;
+/* ================= TARIF ================= */
+function simpanTarif(jenis){
+  const map={
+    tindakan:[tNama,tHarga],
+    radiologi:[rNama,rHarga],
+    paket:[pNama,pHarga]
+  };
+  const nama = map[jenis][0].value;
+  const harga= map[jenis][1].value;
   if(!nama) return alert("Nama kosong");
-  const id = db.ref("dokter").push().key;
-  db.ref("dokter/"+id).set({nama,spes});
-  dokterNama.value=""; dokterSpes.value="";
-  log("Tambah dokter "+nama);
+  const id=db.ref("tarif/"+jenis).push().key;
+  db.ref("tarif/"+jenis+"/"+id).set({nama,harga});
+  map[jenis][0].value=""; map[jenis][1].value="";
+  audit("Tambah tarif "+jenis+" "+nama);
 }
-db.ref("dokter").on("value",snap=>{
-  listDokter.innerHTML="";
-  snap.forEach(c=>{
-    listDokter.innerHTML += `<tr>
-      <td>${c.val().nama}</td>
-      <td>${c.val().spes||""}</td>
-      <td><button onclick="hapus('dokter','${c.key}')">Hapus</button></td>
-    </tr>`;
+["tindakan","radiologi","paket"].forEach(j=>{
+  db.ref("tarif/"+j).on("value",s=>{
+    const ul = document.getElementById("list"+j.charAt(0).toUpperCase()+j.slice(1));
+    if(!ul) return;
+    ul.innerHTML="";
+    s.forEach(c=>{
+      ul.innerHTML+=`<li>${c.val().nama} - Rp${c.val().harga}</li>`;
+    });
   });
 });
 
-/* ================== POLI ================== */
-function simpanPoli(){
-  const nama = poliNama.value;
-  if(!nama) return alert("Nama kosong");
-  const id = db.ref("poli").push().key;
-  db.ref("poli/"+id).set({nama});
-  poliNama.value="";
-  log("Tambah poli "+nama);
-}
-db.ref("poli").on("value",snap=>{
-  listPoli.innerHTML="";
-  snap.forEach(c=>{
-    listPoli.innerHTML += `<tr>
-      <td>${c.val().nama}</td>
-      <td><button onclick="hapus('poli','${c.key}')">Hapus</button></td>
-    </tr>`;
+/* ================= LAPORAN ================= */
+let cacheLaporan=[];
+function rekap(){
+  const d1=dari.value, d2=sampai.value;
+  db.ref("kunjungan").once("value").then(s=>{
+    lapRekap.innerHTML="";
+    cacheLaporan=[];
+    s.forEach(c=>{
+      const v=c.val();
+      if(v.tgl>=d1 && v.tgl<=d2){
+        lapRekap.innerHTML+=`<tr><td>${v.tgl}</td><td>${v.pasien}</td><td>${v.poli}</td></tr>`;
+        cacheLaporan.push(v);
+      }
+    });
   });
-});
-
-/* ================== USER ================== */
-function simpanUser(){
-  const email = userEmail.value;
-  const role  = userRole.value;
-  if(!email) return alert("Email kosong");
-  const id = email.replace(/\./g,"_");
-  db.ref("userMaster/"+id).set({email,role});
-  userEmail.value="";
-  log("Set user "+email+" sebagai "+role);
 }
-db.ref("userMaster").on("value",snap=>{
-  listUser.innerHTML="";
-  snap.forEach(c=>{
-    listUser.innerHTML += `<tr>
-      <td>${c.val().email}</td>
-      <td>${c.val().role}</td>
-    </tr>`;
-  });
-});
+function exportExcel(){
+  let csv="Tanggal,Pasien,Poli\n";
+  cacheLaporan.forEach(v=> csv+=`${v.tgl},${v.pasien},${v.poli}\n`);
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="laporan.csv";
+  a.click();
+}
 
-/* ================== KUNJUNGAN ================== */
-db.ref("kunjungan").limitToLast(50).on("value",snap=>{
-  listKunjungan.innerHTML="";
-  snap.forEach(c=>{
+/* ================= KEUANGAN ================= */
+function simpanBilling(){
+  const pasien=bPasien.value, total=bTotal.value;
+  if(!pasien||!total) return alert("Lengkapi billing");
+  const id=db.ref("billing").push().key;
+  db.ref("billing/"+id).set({
+    pasien,total,status:"BELUM LUNAS",
+    tgl:new Date().toISOString().slice(0,10)
+  });
+  bPasien.value=""; bTotal.value="";
+  audit("Input billing "+pasien);
+}
+db.ref("billing").on("value",s=>{
+  let total=0;
+  listPiutang.innerHTML="";
+  s.forEach(c=>{
     const v=c.val();
-    listKunjungan.innerHTML+=`<tr>
-      <td>${v.tgl||""}</td>
-      <td>${v.pasien||""}</td>
-      <td>${v.poli||""}</td>
-    </tr>`;
+    if(v.status==="BELUM LUNAS")
+      listPiutang.innerHTML+=`<li>${v.pasien} - Rp${v.total}</li>`;
+    total+=parseInt(v.total||0);
+  });
+  totalHari.innerText="Rp"+total;
+});
+
+/* ================= ANTRIAN ================= */
+function resetAntrian(){
+  if(confirm("Reset antrian hari ini?")){
+    db.ref("antrian").remove();
+    audit("Reset antrian");
+  }
+}
+db.ref("antrian").on("value",s=>{
+  listAntrian.innerHTML="";
+  s.forEach(c=>{
+    listAntrian.innerHTML+=`<li>${c.key} - ${c.val().nama||""}</li>`;
   });
 });
 
-/* ================== LOG ================== */
-function log(teks){
-  const id = db.ref("log").push().key;
-  db.ref("log/"+id).set({
-    waktu: new Date().toLocaleString(),
+/* ================= AUDIT ================= */
+function audit(teks){
+  const id=db.ref("audit").push().key;
+  db.ref("audit/"+id).set({
+    waktu:new Date().toLocaleString(),
+    user:auth.currentUser ? auth.currentUser.email : "system",
     teks
   });
 }
-db.ref("log").limitToLast(30).on("value",snap=>{
-  listLog.innerHTML="";
-  snap.forEach(c=>{
-    listLog.innerHTML+=`<li>${c.val().waktu} - ${c.val().teks}</li>`;
+db.ref("audit").limitToLast(50).on("value",s=>{
+  auditLog.innerHTML="";
+  s.forEach(c=>{
+    const v=c.val();
+    auditLog.innerHTML+=`<li>${v.waktu} | ${v.user} → ${v.teks}</li>`;
   });
 });
 
-/* ================== UTIL ================== */
-function hapus(path,id){
-  if(confirm("Hapus data?")){
-    db.ref(path+"/"+id).remove();
-    log("Hapus "+path+" "+id);
-  }
+/* ================= MASTER DATA ================= */
+function simpanMaster(jenis){
+  const map={
+    icd:[icdKode,icdNama],
+    icd9:[icd9Kode,icd9Nama],
+    obat:[obatNama,obatStok]
+  };
+  const a=map[jenis][0].value, b=map[jenis][1].value;
+  if(!a||!b) return alert("Lengkapi data");
+  const id=db.ref(jenis).push().key;
+  db.ref(jenis+"/"+id).set({a,b});
+  map[jenis][0].value=""; map[jenis][1].value="";
+  audit("Tambah master "+jenis+" "+a);
 }
+["icd","icd9","obat"].forEach(j=>{
+  db.ref(j).on("value",s=>{
+    const ul=document.getElementById("list"+j.toUpperCase());
+    if(!ul) return;
+    ul.innerHTML="";
+    s.forEach(c=>{
+      const v=c.val();
+      ul.innerHTML+=`<li>${v.a} - ${v.b}</li>`;
+    });
+  });
+});
+
+/* ================= UTIL ================= */
 function logout(){
   auth.signOut();
   location.href="index.html";
