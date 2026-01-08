@@ -40,10 +40,13 @@ button.primary{
   background:#2563eb;color:#fff;border:none;
   padding:10px 16px;border-radius:10px;cursor:pointer
 }
+button.success{
+  background:#16a34a;color:#fff;border:none;
+  padding:8px 14px;border-radius:10px;cursor:pointer
+}
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #e5e7eb}
 tr:hover{background:#f9fafb;cursor:pointer}
-.badge{padding:4px 10px;border-radius:999px;background:#e5e7eb;font-size:12px}
 </style>
 </head>
 
@@ -56,6 +59,7 @@ tr:hover{background:#f9fafb;cursor:pointer}
     <option value="pendaftaran">Pendaftaran</option>
     <option value="perawat">Perawat</option>
     <option value="dokter">Dokter</option>
+    <option value="farmasi">Farmasi</option>
   </select>
 </header>
 
@@ -72,12 +76,7 @@ tr:hover{background:#f9fafb;cursor:pointer}
 <!-- PENDAFTARAN -->
 <div id="pendaftaran" class="card hidden">
   <h2>Pendaftaran</h2>
-  <select id="jenisPasien">
-    <option value="baru">Pasien Baru</option>
-    <option value="lama">Pasien Lama</option>
-  </select>
   <input id="namaPasien" placeholder="Nama Pasien">
-  <input id="noRM" placeholder="No RM (jika lama)">
   <button class="primary" onclick="daftarPasien()">Simpan</button>
 </div>
 
@@ -92,7 +91,6 @@ tr:hover{background:#f9fafb;cursor:pointer}
   <p id="infoPerawat"></p>
   <textarea id="keluhan" placeholder="Keluhan"></textarea>
   <input id="ttv" placeholder="TTV">
-  <textarea id="anamnesaText" placeholder="Catatan"></textarea>
   <button class="primary" onclick="simpanAnamnesa()">Simpan</button>
 </div>
 
@@ -105,13 +103,22 @@ tr:hover{background:#f9fafb;cursor:pointer}
 <div id="soap" class="card hidden">
   <h2>Pemeriksaan Dokter</h2>
   <p id="infoDokter"></p>
-  <textarea id="S" placeholder="Subjective"></textarea>
-  <textarea id="O" placeholder="Objective"></textarea>
-  <textarea id="A" placeholder="Assessment"></textarea>
-  <textarea id="P" placeholder="Plan"></textarea>
-  <input id="diagnosis" placeholder="Diagnosis">
-  <textarea id="resep" placeholder="Resep / Tindakan"></textarea>
-  <button class="primary" onclick="simpanSOAP()">Selesai</button>
+  <textarea id="diagnosis" placeholder="Diagnosis"></textarea>
+  <textarea id="resep" placeholder="Resep"></textarea>
+  <button class="primary" onclick="simpanSOAP()">Simpan</button>
+</div>
+
+<!-- FARMASI -->
+<div id="farmasi" class="card hidden">
+  <h2>Farmasi</h2>
+  <table><tbody id="tabelFarmasi"></tbody></table>
+</div>
+
+<div id="detailFarmasi" class="card hidden">
+  <h2>Penyerahan Obat</h2>
+  <p id="infoFarmasi"></p>
+  <textarea id="resepFarmasi" readonly></textarea>
+  <button class="success" onclick="selesaiFarmasi()">Obat Diserahkan</button>
 </div>
 
 </main>
@@ -122,60 +129,90 @@ firebase.initializeApp({
   databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 const db=firebase.database();
-let role='', pasienAktif=null;
+let pasienAktif=null;
 
-function setRole(r){role=r;menu.innerHTML='';add('Dashboard','dashboard');
+function setRole(r){
+menu.innerHTML='';
+add('Dashboard','dashboard');
 if(r==='pendaftaran')add('Pendaftaran','pendaftaran');
 if(r==='perawat')add('Perawat','perawat');
 if(r==='dokter')add('Dokter','dokter');
-show('dashboard');}
+if(r==='farmasi')add('Farmasi','farmasi');
+show('dashboard');
+}
+function add(l,i){
+let b=document.createElement('button');
+b.innerText=l;b.onclick=()=>show(i);menu.appendChild(b);
+}
+function show(i){
+document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+document.getElementById(i).classList.remove('hidden');
+}
 
-function add(l,i){let b=document.createElement('button');
-b.innerText=l;b.onclick=()=>show(i);menu.appendChild(b);}
-function show(i){document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
-document.getElementById(i).classList.remove('hidden');}
-
-/* PENDAFTARAN */
+/* DAFTAR */
 function daftarPasien(){
-let rm=jenisPasien.value==='baru'?'RM'+Date.now():noRM.value;
-let data={nama:namaPasien.value,rm,antrian:'A'+Math.floor(Math.random()*900),
-status:'menunggu_perawat'};
-db.ref('kunjungan_hari_ini').push(data);alert('Terdaftar');
+db.ref('kunjungan_hari_ini').push({
+nama:namaPasien.value,
+antrian:'A'+Math.floor(Math.random()*900),
+status:'menunggu_perawat'
+});
+alert('Terdaftar');
 }
 
 /* LISTENER */
 db.ref('kunjungan_hari_ini').on('value',s=>{
-tabelPerawat.innerHTML='';tabelDokter.innerHTML='';
+tabelPerawat.innerHTML='';
+tabelDokter.innerHTML='';
+tabelFarmasi.innerHTML='';
 s.forEach(c=>{
 let d=c.val();
+
+/* PERAWAT */
 if(d.status==='menunggu_perawat'){
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
 r.onclick=()=>{pasienAktif={k:c.key,d};infoPerawat.innerText=d.nama;show('anamnesa');};
 tabelPerawat.appendChild(r);
 }
+
+/* DOKTER */
 if(d.status==='menunggu_dokter'){
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
 r.onclick=()=>{pasienAktif={k:c.key,d};infoDokter.innerText=d.nama;show('soap');};
 tabelDokter.appendChild(r);
 }
+
+/* FARMASI */
+if(d.status==='selesai_dokter'){
+let r=document.createElement('tr');
+r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td><td><button class="success">Panggil</button></td>`;
+r.onclick=()=>{pasienAktif={k:c.key,d};
+infoFarmasi.innerText=`${d.nama} (${d.antrian})`;
+resepFarmasi.value=d.resep;
+show('detailFarmasi');};
+tabelFarmasi.appendChild(r);
+}
+
 });
 });
 
 /* SIMPAN */
 function simpanAnamnesa(){
-db.ref(`kunjungan_hari_ini/${pasienAktif.k}/anamnesa`).set({
-keluhan:keluhan.value,ttv:ttv.value,catatan:anamnesaText.value});
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('menunggu_dokter');
 show('perawat');
 }
 function simpanSOAP(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}`).update({
-soap:{S:S.value,O:O.value,A:A.value,P:P.value},
-diagnosis:diagnosis.value,resep:resep.value,status:'selesai_dokter'
+diagnosis:diagnosis.value,
+resep:resep.value,
+status:'selesai_dokter'
 });
 show('dokter');
+}
+function selesaiFarmasi(){
+db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('selesai_farmasi');
+show('farmasi');
 }
 </script>
 
