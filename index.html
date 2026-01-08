@@ -72,10 +72,39 @@ th{background:#e3f2fd}
 </div>
 
 <script>
+/************************************************
+ * AUTO USER GENERATOR (ROLE-BASED)
+ * Username & Password dibuat otomatis
+ ************************************************/
 const firebaseConfig={databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app/"};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.database();
+
+// ===== AUTO USER GENERATOR =====
+function generateCredential(role){
+  const ts = Date.now().toString().slice(-4);
+  const username = role.toLowerCase()+ts+'@klinik.com';
+  const password = role.toLowerCase()+ts;
+  return {username,password};
+}
+
+// CREATE USER PER ROLE (ADMIN ONLY – tahap awal)
+function createUser(role,nama){
+  const cred = generateCredential(role);
+  auth.createUserWithEmailAndPassword(cred.username,cred.password)
+  .then(res=>{
+    const uid=res.user.uid;
+    db.ref('users/'+uid).set({
+      nama:nama,
+      role:role,
+      aktif:true
+    });
+    alert(`USER DIBUAT\nRole: ${role}\nUsername: ${cred.username}\nPassword: ${cred.password}`);
+  })
+  .catch(e=>alert(e.message));
+}
+
 
 function login(){auth.signInWithEmailAndPassword(email.value,password.value).catch(e=>alert(e.message));}
 
