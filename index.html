@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMR Klinik Terintegrasi</title>
+
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#f4f6f8}
+.hidden{display:none}
+header{padding:14px;color:#fff}
+button{padding:7px 14px;border:none;border-radius:4px;cursor:pointer}
+input,select,textarea{width:100%;padding:6px;margin:4px 0}
+.card{background:#fff;padding:15px;border-radius:8px;margin-bottom:15px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:7px;font-size:13px}
+th{background:#e3f2fd}
+aside{width:230px;background:#263238;color:#fff;min-height:100vh}
+aside a{display:block;color:#fff;text-decoration:none;padding:12px;cursor:pointer}
+aside a:hover{background:#37474f}
+.container{display:flex}
+main{flex:1;padding:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.col{flex:1;min-width:200px}
+.badge{padding:2px 6px;border-radius:4px;font-size:12px}
+.ok{background:#e8f5e9;color:#2e7d32}
+.danger{background:#ffebee;color:#c62828}
+</style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginPage" class="card" style="max-width:380px;margin:80px auto">
+  <h3>Login EMR Klinik</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- ================= ADMIN ================= -->
+<div id="adminPanel" class="hidden">
+<header style="background:#1e88e5">
+  <b>ADMIN PANEL</b>
+  <button style="float:right" onclick="logout()">Logout</button>
+</header>
+<div class="container">
+<aside>
+  <a onclick="showAdmin('admDashboard')">Dashboard</a>
+  <a onclick="showAdmin('admTarif')">Tarif</a>
+  <a onclick="showAdmin('admLaporan')">Laporan</a>
+  <a onclick="showAdmin('admKeuangan')">Keuangan</a>
+  <a onclick="showAdmin('admAntrian')">Antrian</a>
+  <a onclick="showAdmin('admAudit')">Audit</a>
+</aside>
+<main>
+
+<div id="admDashboard" class="card">
+<h3>Dashboard</h3>
+<div class="row">
+  <div class="col">Kunjungan: <b id="admKunjungan">0</b></div>
+  <div class="col">Billing: <b id="admBilling">0</b></div>
+</div>
+</div>
+
+<div id="admTarif" class="card hidden">
+<h3>Tarif</h3>
+<input id="tarifNama" placeholder="Nama">
+<input id="tarifHarga" type="number" placeholder="Harga">
+<button onclick="simpanTarif()">Simpan</button>
+<ul id="listTarif"></ul>
+</div>
+
+<div id="admLaporan" class="card hidden">
+<h3>Laporan Kunjungan</h3>
+<input type="date" id="lapDari">
+<input type="date" id="lapSampai">
+<button onclick="rekapLaporan()">Tampilkan</button>
+<button onclick="exportCSV()">Export CSV</button>
+<table>
+<thead><tr><th>Tanggal</th><th>Pasien</th></tr></thead>
+<tbody id="lapData"></tbody>
+</table>
+</div>
+
+<div id="admKeuangan" class="card hidden">
+<h3>Billing</h3>
+<input id="billNama" placeholder="Nama Pasien">
+<input id="billTotal" type="number" placeholder="Total">
+<button onclick="simpanBilling()">Simpan</button>
+<ul id="billList"></ul>
+</div>
+
+<div id="admAntrian" class="card hidden">
+<h3>Antrian</h3>
+<button onclick="resetAntrian()">Reset Harian</button>
+<ul id="admAntrianList"></ul>
+</div>
+
+<div id="admAudit" class="card hidden">
+<h3>Audit Log</h3>
+<ul id="auditLog"></ul>
+</div>
+
+</main>
+</div>
+</div>
+
+<!-- ================= DOKTER ================= -->
+<div id="dokterPanel" class="hidden">
+<header style="background:#1976d2">
+  <b>DOKTER PANEL</b>
+  <button style="float:right" onclick="logout()">Logout</button>
+</header>
+<main>
+<div class="card">
+<h3>Antrian Pasien</h3>
+<table>
+<thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead>
+<tbody id="dokterAntrian"></tbody>
+</table>
+</div>
+
+<div class="card hidden" id="soapCard">
+<h3>SOAP</h3>
+<input type="hidden" id="soapKey">
+<textarea id="S" placeholder="Subjective"></textarea>
+<textarea id="O" placeholder="Objective"></textarea>
+<textarea id="A" placeholder="Assessment"></textarea>
+<textarea id="P" placeholder="Plan"></textarea>
+<button onclick="simpanSOAP()">Simpan</button>
+<button onclick="cetakResume()">Cetak</button>
+</div>
+</main>
+</div>
+
+<!-- ================= PERAWAT ================= -->
+<div id="perawatPanel" class="hidden">
+<header style="background:#2e7d32">
+  <b>PERAWAT PANEL</b>
+  <button style="float:right" onclick="logout()">Logout</button>
+</header>
+<main>
+
+<div class="card">
+<h3>Triase</h3>
+<input id="triNama" placeholder="Nama Pasien">
+<select id="triKat">
+<option value="">Kategori</option>
+<option>Merah</option>
+<option>Kuning</option>
+<option>Hijau</option>
+</select>
+<textarea id="triKeluhan" placeholder="Keluhan"></textarea>
+<button onclick="simpanTriase()">Simpan</button>
+<ul id="triList"></ul>
+</div>
+
+<div class="card">
+<h3>Vital Sign</h3>
+<input id="vNama" placeholder="Nama Pasien">
+<input id="vTD" placeholder="TD">
+<input id="vNadi" placeholder="Nadi">
+<input id="vRR" placeholder="RR">
+<input id="vSuhu" placeholder="Suhu">
+<button onclick="simpanVital()">Simpan</button>
+<table>
+<thead><tr><th>Waktu</th><th>Nama</th><th>TD</th></tr></thead>
+<tbody id="vitalList"></tbody>
+</table>
+</div>
+
+</main>
+</div>
+
+<script>
+/* ================= FIREBASE CONFIG ================= */
+const firebaseConfig={
+  apiKey:"ISI_API_KEY",
+  authDomain:"ISI_AUTH_DOMAIN",
+  databaseURL:"ISI_DB_URL",
+  projectId:"ISI_PROJECT_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
+
+/* ================= LOGIN ================= */
+function login(){
+  auth.signInWithEmailAndPassword(email.value,password.value)
+    .catch(e=>alert(e.message));
+}
+
+/* ================= AUTH ROUTER ================= */
+auth.onAuthStateChanged(u=>{
+  if(!u)return;
+  db.ref("users/"+u.uid+"/role").once("value").then(s=>{
+    loginPage.classList.add("hidden");
+    if(s.val()==="admin") adminPanel.classList.remove("hidden");
+    else if(s.val()==="dokter") dokterPanel.classList.remove("hidden");
+    else if(s.val()==="perawat") perawatPanel.classList.remove("hidden");
+  });
+});
+
+/* ================= ADMIN ================= */
+function showAdmin(id){
+  document.querySelectorAll("#adminPanel .card").forEach(c=>c.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+function simpanTarif(){
+  db.ref("tarif").push({nama:tarifNama.value,harga:tarifHarga.value});
+}
+db.ref("tarif").on("value",s=>{
+  listTarif.innerHTML="";
+  s.forEach(c=>listTarif.innerHTML+=`<li>${c.val().nama} - ${c.val().harga}</li>`);
+});
+function simpanBilling(){
+  db.ref("billing").push({nama:billNama.value,total:billTotal.value});
+}
+db.ref("billing").on("value",s=>{
+  billList.innerHTML="";
+  s.forEach(c=>billList.innerHTML+=`<li>${c.val().nama} - ${c.val().total}</li>`);
+});
+function resetAntrian(){
+  if(confirm("Reset antrian?")) db.ref("antrian").remove();
+}
+
+/* ================= DOKTER ================= */
+db.ref("antrian").on("value",s=>{
+  dokterAntrian.innerHTML="";
+  let i=1;
+  s.forEach(c=>{
+    dokterAntrian.innerHTML+=`
+    <tr><td>${i++}</td><td>${c.val().nama}</td>
+    <td><button onclick="bukaSOAP('${c.key}')">Periksa</button></td></tr>`;
+  });
+});
+function bukaSOAP(k){
+  soapKey.value=k;
+  soapCard.classList.remove("hidden");
+}
+function simpanSOAP(){
+  const k=soapKey.value;
+  db.ref("rekam_medis/"+k).push({
+    S:S.value,O:O.value,A:A.value,P:P.value,
+    waktu:new Date().toLocaleString()
+  });
+  db.ref("antrian/"+k).remove();
+  soapCard.classList.add("hidden");
+}
+function cetakResume(){
+  const w=window.open("");
+  w.document.write(`<h3>Resume Medis</h3><pre>${S.value}</pre>`);
+  w.print();
+}
+
+/* ================= PERAWAT ================= */
+function simpanTriase(){
+  db.ref("triase").push({
+    nama:triNama.value,
+    kategori:triKat.value,
+    keluhan:triKeluhan.value,
+    waktu:new Date().toLocaleString()
+  });
+}
+db.ref("triase").limitToLast(10).on("value",s=>{
+  triList.innerHTML="";
+  s.forEach(c=>{
+    triList.innerHTML+=`<li>${c.val().waktu} - ${c.val().nama} (${c.val().kategori})</li>`;
+  });
+});
+function simpanVital(){
+  db.ref("vital").push({
+    nama:vNama.value,td:vTD.value,nadi:vNadi.value,
+    waktu:new Date().toLocaleString()
+  });
+}
+db.ref("vital").limitToLast(10).on("value",s=>{
+  vitalList.innerHTML="";
+  s.forEach(c=>{
+    vitalList.innerHTML+=`<tr><td>${c.val().waktu}</td><td>${c.val().nama}</td><td>${c.val().td}</td></tr>`;
+  });
+});
+
+/* ================= UTIL ================= */
+function logout(){
+  auth.signOut();
+  location.reload();
+}
+</script>
+
+</body>
+</html>
