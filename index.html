@@ -13,49 +13,23 @@
 *{box-sizing:border-box;font-family:Inter,Arial}
 body{margin:0;background:#f9fafb}
 .hidden{display:none}
-header{
-  height:56px;background:#fff;border-bottom:1px solid #e5e7eb;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 20px;font-weight:600
-}
+header{height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-weight:600}
 .app{display:flex;min-height:calc(100vh - 56px)}
-nav{
-  width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px
-}
-nav button{
-  width:100%;padding:10px;margin-bottom:6px;
-  border:none;border-radius:8px;background:transparent;
-  text-align:left;cursor:pointer
-}
+nav{width:220px;background:#fff;border-right:1px solid #e5e7eb;padding:12px}
+nav button{width:100%;padding:10px;margin-bottom:6px;border:none;border-radius:8px;background:transparent;text-align:left;cursor:pointer}
 nav button:hover{background:#f3f4f6}
 main{flex:1;padding:24px}
-.card{
-  background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;
-  box-shadow:0 8px 20px rgba(0,0,0,.04)
-}
-.stat{
-  display:flex;gap:20px;margin-bottom:20px
-}
-.stat div{
-  flex:1;background:#f1f5f9;border-radius:12px;
-  padding:16px;text-align:center
-}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 8px 20px rgba(0,0,0,.04)}
+.stat{display:flex;gap:20px;margin-bottom:20px}
+.stat div{flex:1;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center}
 .stat b{font-size:28px;display:block}
-input,textarea,select{
-  width:100%;padding:10px;margin-bottom:12px;
-  border-radius:10px;border:1px solid #d1d5db
-}
-button.primary{
-  background:#2563eb;color:#fff;border:none;
-  padding:10px 16px;border-radius:10px;cursor:pointer
-}
-button.success{
-  background:#16a34a;color:#fff;border:none;
-  padding:8px 14px;border-radius:10px;cursor:pointer
-}
+input,textarea,select{width:100%;padding:10px;margin-bottom:12px;border-radius:10px;border:1px solid #d1d5db}
+button.primary{background:#2563eb;color:#fff;border:none;padding:10px 16px;border-radius:10px;cursor:pointer}
+button.success{background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer}
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #e5e7eb}
 tr:hover{background:#f9fafb;cursor:pointer}
+hr{border:none;border-top:1px solid #e5e7eb;margin:20px 0}
 </style>
 </head>
 
@@ -90,39 +64,20 @@ tr:hover{background:#f9fafb;cursor:pointer}
   <canvas id="grafikKunjungan" height="120"></canvas>
 </div>
 
-<!-- PENDAFTARAN RS -->
+<!-- PENDAFTARAN -->
 <div id="pendaftaran" class="card hidden">
   <h2>Pendaftaran Rekam Medis</h2>
-
-  <h4>Identitas Pasien</h4>
   <input id="noRM" placeholder="No RM (kosongkan jika baru)">
   <input id="namaPasien" placeholder="Nama Lengkap">
   <input id="nik" placeholder="NIK">
-  <select id="jk">
-    <option value="">Jenis Kelamin</option>
-    <option>Laki-laki</option>
-    <option>Perempuan</option>
-  </select>
+  <select id="jk"><option value="">Jenis Kelamin</option><option>Laki-laki</option><option>Perempuan</option></select>
   <input id="tglLahir" type="date">
   <input id="usia" placeholder="Usia">
   <input id="alamat" placeholder="Alamat">
   <input id="telp" placeholder="No. Telp">
-
-  <h4>Administrasi</h4>
-  <select id="jenisPasien">
-    <option value="">Jenis Pasien</option>
-    <option>Umum</option>
-    <option>BPJS</option>
-    <option>Asuransi</option>
-  </select>
+  <select id="jenisPasien"><option value="">Jenis Pasien</option><option>Umum</option><option>BPJS</option><option>Asuransi</option></select>
   <input id="noBPJS" placeholder="No BPJS / Asuransi">
-  <select id="poli">
-    <option value="">Poli Tujuan</option>
-    <option>Umum</option>
-    <option>Gigi</option>
-    <option>KIA</option>
-  </select>
-
+  <select id="poli"><option value="">Poli Tujuan</option><option>Umum</option><option>Gigi</option><option>KIA</option></select>
   <button class="primary" onclick="daftarPasien()">Daftarkan Pasien</button>
 </div>
 
@@ -130,67 +85,59 @@ tr:hover{background:#f9fafb;cursor:pointer}
 <div id="perawat" class="card hidden">
   <h2>Perawat</h2>
   <table><tbody id="tabelPerawat"></tbody></table>
-
 </div>
-  <!-- ANAMNESA PERAWAT (RS VERSION) -->
+
+<!-- ANAMNESA -->
 <div id="anamnesa" class="card hidden">
   <h2>Anamnesa & Triase Perawat</h2>
-
   <div class="stat">
-    <div>
-      <small>Nama Pasien</small>
-      <b id="infoPerawat"></b>
-    </div>
-    <div>
-      <small>No RM</small>
-      <b id="infoRM"></b>
-    </div>
+    <div><small>Nama Pasien</small><b id="infoPerawat"></b></div>
+    <div><small>No RM</small><b id="infoRM"></b></div>
   </div>
-
-  <h4>Keluhan Utama</h4>
-  <textarea id="keluhan" placeholder="Keluhan utama pasien"></textarea>
-
-  <h4>Riwayat Singkat</h4>
-  <textarea id="riwayat" placeholder="Riwayat penyakit sekarang / dahulu"></textarea>
-
-  <h4>Tanda Vital</h4>
-  <input id="td" placeholder="Tekanan Darah (mmHg)">
-  <input id="nadi" placeholder="Nadi (x/menit)">
-  <input id="rr" placeholder="Respirasi (x/menit)">
-  <input id="suhu" placeholder="Suhu (°C)">
-  <input id="spo2" placeholder="SpO2 (%)">
-
-  <h4>Antropometri</h4>
-  <input id="bb" placeholder="Berat Badan (kg)">
-  <input id="tb" placeholder="Tinggi Badan (cm)">
-
-  <h4>Triase</h4>
-  <select id="triase">
-    <option value="">Pilih Triase</option>
-    <option value="Hijau">Hijau (Stabil)</option>
-    <option value="Kuning">Kuning (Perlu Observasi)</option>
-    <option value="Merah">Merah (Gawat)</option>
-  </select>
-
-  <h4>Catatan Perawat</h4>
-  <textarea id="catatanPerawat" placeholder="Catatan tambahan perawat"></textarea>
-
+  <textarea id="keluhan" placeholder="Keluhan utama"></textarea>
+  <textarea id="riwayat" placeholder="Riwayat singkat"></textarea>
+  <input id="td" placeholder="Tekanan Darah">
+  <input id="nadi" placeholder="Nadi">
+  <input id="rr" placeholder="RR">
+  <input id="suhu" placeholder="Suhu">
+  <input id="spo2" placeholder="SpO2">
   <button class="primary" onclick="simpanAnamnesa()">Simpan & Kirim ke Dokter</button>
 </div>
 
-
-<!-- DOKTER -->
+<!-- DOKTER LIST -->
 <div id="dokter" class="card hidden">
   <h2>Dokter</h2>
   <table><tbody id="tabelDokter"></tbody></table>
 </div>
 
+<!-- SOAP DOKTER (UPGRADE RS) -->
 <div id="soap" class="card hidden">
-  <h2>Pemeriksaan Dokter</h2>
-  <p id="infoDokter"></p>
-  <textarea id="diagnosis" placeholder="Diagnosis"></textarea>
-  <textarea id="resep" placeholder="Resep"></textarea>
-  <button class="primary" onclick="simpanSOAP()">Simpan</button>
+  <h2>Pemeriksaan Dokter – SOAP</h2>
+  <div class="stat">
+    <div><small>Pasien</small><b id="infoDokter"></b></div>
+    <div><small>Waktu</small><b id="waktuPeriksa"></b></div>
+  </div>
+
+  <h4>S – Subjective</h4>
+  <textarea id="soapS"></textarea>
+
+  <h4>O – Objective</h4>
+  <textarea id="soapO"></textarea>
+
+  <h4>A – Assessment</h4>
+  <input id="diagnosis" placeholder="Diagnosis">
+  <textarea id="soapA"></textarea>
+
+  <h4>P – Plan</h4>
+  <textarea id="soapP"></textarea>
+
+  <h4>Tindakan</h4>
+  <textarea id="tindakan"></textarea>
+
+  <h4>Resep</h4>
+  <textarea id="resep"></textarea>
+
+  <button class="primary" onclick="simpanSOAP()">Simpan Pemeriksaan</button>
 </div>
 
 <!-- FARMASI -->
@@ -208,9 +155,9 @@ tr:hover{background:#f9fafb;cursor:pointer}
 
 <!-- TV -->
 <div id="tv" class="card hidden" style="text-align:center">
-  <h1 style="font-size:48px">ANTRIAN</h1>
-  <div id="tvNomor" style="font-size:120px;font-weight:800">-</div>
-  <div id="tvNama" style="font-size:36px">Menunggu</div>
+  <h1>ANTRIAN</h1>
+  <div id="tvNomor" style="font-size:120px">-</div>
+  <div id="tvNama" style="font-size:36px"></div>
 </div>
 
 </main>
@@ -221,6 +168,9 @@ firebase.initializeApp({
   databaseURL:"https://develop-program-erm-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 const db=firebase.database();
+const menu=document.getElementById('menu');
+const grafikKunjungan=document.getElementById('grafikKunjungan');
+
 let pasienAktif=null, terakhirDipanggil=null, chart=null;
 
 function setRole(r){
@@ -247,7 +197,7 @@ db.ref('kunjungan_hari_ini').push({
 rm,nama:namaPasien.value,nik:nik.value,jk:jk.value,
 tgl_lahir:tglLahir.value,usia:usia.value,alamat:alamat.value,telp:telp.value,
 jenis_pasien:jenisPasien.value,no_bpjs:noBPJS.value,poli:poli.value,
-antrian,status:'menunggu_perawat',waktu:new Date().toISOString()
+antrian,status:'menunggu_perawat'
 });
 alert(`Terdaftar\nRM:${rm}\nAntrian:${antrian}`);
 show('dashboard');
@@ -258,30 +208,35 @@ let stat={mp:0,md:0,sd:0,sf:0};
 tabelPerawat.innerHTML=tabelDokter.innerHTML=tabelFarmasi.innerHTML='';
 s.forEach(c=>{
 let d=c.val();
-if(d.status==='menunggu_perawat'){stat.mp++;
+
+if(d.status==='menunggu_perawat'){
+stat.mp++;
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key};infoPerawat.innerText=d.nama;show('anamnesa')};
-tabelPerawat.appendChild(r);}
-if(d.status==='menunggu_dokter'){stat.md++;
+r.onclick=()=>{pasienAktif={k:c.key};infoPerawat.innerText=d.nama;infoRM.innerText=d.rm;show('anamnesa')};
+tabelPerawat.appendChild(r);
+}
+
+if(d.status==='menunggu_dokter'){
+stat.md++;
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-r.onclick=()=>{pasienAktif={k:c.key};infoDokter.innerText=d.nama;show('soap')};
-tabelDokter.appendChild(r);}
-if(d.status==='selesai_dokter'){stat.sd++;
+r.onclick=()=>{pasienAktif={k:c.key};infoDokter.innerText=d.nama;waktuPeriksa.innerText=new Date().toLocaleString('id-ID');show('soap')};
+tabelDokter.appendChild(r);
+}
+
+if(d.status==='selesai_dokter'){
+stat.sd++;
 let r=document.createElement('tr');
 r.innerHTML=`<td>${d.antrian}</td><td>${d.nama}</td>`;
-tabelFarmasi.appendChild(r);}
-if(d.dipanggil&&terakhirDipanggil!==c.key){
-terakhirDipanggil=c.key;
-tvNomor.innerText=d.antrian;tvNama.innerText=d.nama;
-speechSynthesis.speak(new SpeechSynthesisUtterance(
-`Nomor antrian ${d.antrian} atas nama ${d.nama}`
-));}
+r.onclick=()=>{pasienAktif={k:c.key};infoFarmasi.innerText=d.nama;resepFarmasi.value=d.resep||'';show('detailFarmasi')};
+tabelFarmasi.appendChild(r);
+}
+
 });
 totalKunjungan.innerText=s.size;
 menunggu.innerText=stat.mp+stat.md;
-selesai.innerText=stat.sf;
+selesai.innerText=stat.sd;
 updateChart(stat);
 });
 
@@ -289,8 +244,8 @@ function updateChart(s){
 if(chart)chart.destroy();
 chart=new Chart(grafikKunjungan,{
 type:'bar',
-data:{labels:['Perawat','Dokter','Selesai Dokter','Farmasi'],
-datasets:[{data:[s.mp,s.md,s.sd,s.sf]}]},
+data:{labels:['Perawat','Dokter','Selesai Dokter'],
+datasets:[{data:[s.mp,s.md,s.sd]}]},
 options:{plugins:{legend:{display:false}}}
 });
 }
@@ -299,12 +254,18 @@ function simpanAnamnesa(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('menunggu_dokter');
 show('perawat');
 }
+
 function simpanSOAP(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}`).update({
-diagnosis:diagnosis.value,resep:resep.value,status:'selesai_dokter'
+soap:{S:soapS.value,O:soapO.value,A:soapA.value,P:soapP.value},
+diagnosis:diagnosis.value,
+tindakan:tindakan.value,
+resep:resep.value,
+status:'selesai_dokter'
 });
 show('dokter');
 }
+
 function selesaiFarmasi(){
 db.ref(`kunjungan_hari_ini/${pasienAktif.k}/status`).set('selesai_farmasi');
 show('farmasi');
